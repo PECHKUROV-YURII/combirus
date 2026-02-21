@@ -1,0 +1,141 @@
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { EventCard } from "@/components/events/EventCard";
+import { cn } from "@/lib/utils";
+
+type Tab = "participating" | "organizing";
+
+export default function HomePage() {
+  const { user } = useAuth();
+  const [tab, setTab] = useState<Tab>("participating");
+  const [participating, setParticipating] = useState<any[]>([]);
+  const [organizing, setOrganizing] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchData();
+  }, [user]);
+
+  const fetchData = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    const now = new Date().toISOString();
+
+    // Events I'm participating in
+    const { data: myParticipations } = await supabase
+      .from("event_participants")
+      .select("event_id")
+      .eq("user_id", user.id)
+      .in("status", ["confirmed", "reserve"]);
+
+    const participatingIds = myParticipations?.map((p: any) => p.event_id) || [];
+
+    let participatingEvents: any[] = [];
+    if (participatingIds.length > 0) {
+      const { data } = await supabase
+        .from("events")
+        .select("*")
+        .in("id", participatingIds)
+        .eq("status", "active")
+        .gte("start_datetime", now)
+        .order("start_datetime", { ascending: true });
+      participatingEvents = data || [];
+    }
+
+    // Events I'm organizing
+    const { data: organizingEvents } = await supabase
+      .from("events")
+      .select("*")
+      .eq("organizer_user_id", user.id)
+      .eq("status", "active")
+      .gte("start_datetime", now)
+      .order("start_datetime", { ascending: true });
+
+    setParticipating(participatingEvents);
+    setOrganizing(organizingEvents || []);
+
+    // Auto-select tab with earliest event
+    if (participatingEvents.length === 0 && (organizingEvents?.length ?? 0) > 0) {
+      setTab("organizing");
+    } else if (participatingEvents.length > 0 && (organizingEvents?.length ?? 0) > 0) {
+      const pFirst = new Date(participatingEvents[0].start_datetime);
+      const oFirst = new Date(organizingEvents![0].start_datetime);
+      setTab(pFirst <= oFirst ? "participating" : "organizing");
+    }
+
+    setLoading(false);
+  };
+
+  const currentEvents = tab === "participating" ? participating : organizing;
+  const otherCount = tab === "participating" ? organizing.length : participating.length;
+
+  return (
+    <div className="min-h-screen bg-background safe-top">
+      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 pt-4 pb-0">
+        <h1 className="text-xl font-bold mb-3">
+          <span className="text-primary">Combi</span>
+        </h1>
+        <div className="flex">
+          <button
+            onClick={() => setTab("participating")}
+            className={cn(
+              "flex-1 pb-2.5 text-sm font-medium border-b-2 transition-colors",
+              tab === "participating"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground"
+            )}
+          >
+            Я участвую
+            {participating.length > 0 && tab !== "participating" && (
+              <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                {participating.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setTab("organizing")}
+            className={cn(
+              "flex-1 pb-2.5 text-sm font-medium border-b-2 transition-colors",
+              tab === "organizing"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground"
+            )}
+          >
+            Я организую
+            {organizing.length > 0 && tab !== "organizing" && (
+              <span className="ml-1.5 text-xs bg-muted px-1.5 py-0.5 rounded-full">
+                {organizing.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <div className="px-4 py-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : currentEvents.length === 0 ? (
+          <div className="text-center py-20 text-muted-foreground">
+            <p className="text-lg font-medium">
+              {tab === "participating" ? "Вы ещё не участвуете в событиях" : "Вы ещё не создали событий"}
+            </p>
+            <p className="text-sm mt-1">
+              {tab === "participating" ? "Найдите интересные события в поиске" : "Нажмите + чтобы создать событие"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {currentEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
