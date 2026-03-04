@@ -7,6 +7,7 @@ export function AppLayout() {
       <div className="pb-16">
         <Outlet />
       </div>
+      <footer className="text-center text-xs text-muted-foreground py-2">Test commit</footer>
       <TabBar />
     </div>
   );
