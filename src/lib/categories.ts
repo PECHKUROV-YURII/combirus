@@ -12,7 +12,7 @@ export const EVENT_CATEGORIES = [
 ] as const;
 
 export const EVENT_LEVELS = [
-  { value: "any", label: "Любой" },
+  { value: "any", label: "Не важно" },
   { value: "beginner", label: "Начинающий" },
   { value: "intermediate", label: "Средний" },
   { value: "advanced", label: "Продвинутый" },

@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { EVENT_CATEGORIES, EVENT_LEVELS } from "@/lib/categories";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ImagePlus } from "lucide-react";
 
 export default function CreateEvent() {
   const { user, profile } = useAuth();
@@ -30,17 +30,43 @@ export default function CreateEvent() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   if (!user) {
     navigate("/auth");
     return null;
   }
 
-  // Check subscription for paid events
   const canCreatePaid = profile?.subscription_plan !== "free";
 
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Максимальный размер файла — 5 МБ");
+      return;
+    }
+    setCoverFile(file);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const uploadCover = async (): Promise<string[]> => {
+    if (!coverFile) return [];
+    const ext = coverFile.name.split(".").pop();
+    const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("event-covers").upload(path, coverFile);
+    if (error) {
+      console.error("Upload error:", error);
+      toast.error("Ошибка загрузки обложки");
+      return [];
+    }
+    const { data: urlData } = supabase.storage.from("event-covers").getPublicUrl(path);
+    return [urlData.publicUrl];
+  };
+
   const handleSubmit = async () => {
-    if (!title.trim() || !startDate || !startTime || !endDate || !endTime || !address.trim()) {
+    if (!category || !title.trim() || !startDate || !startTime || !endDate || !endTime || !address.trim()) {
       toast.error("Заполните обязательные поля");
       return;
     }
@@ -60,6 +86,7 @@ export default function CreateEvent() {
 
     setLoading(true);
 
+    const coverImages = await uploadCover();
     const maxParts = parseInt(maxParticipants) || 10;
     const reserveLimit = Math.round(maxParts * 0.2);
 
@@ -81,7 +108,7 @@ export default function CreateEvent() {
         price: isPaid ? parseFloat(price) || 0 : 0,
         payment_type: "onsite",
         organizer_user_id: user.id,
-        cover_images: [],
+        cover_images: coverImages,
       })
       .select()
       .single();
@@ -107,6 +134,7 @@ export default function CreateEvent() {
       </div>
 
       <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
+        {/* 1. Категория */}
         <div className="space-y-2">
           <Label>Категория *</Label>
           <Select value={category} onValueChange={setCategory}>
@@ -119,22 +147,56 @@ export default function CreateEvent() {
           </Select>
         </div>
 
+        {/* 2. Название */}
         <div className="space-y-2">
           <Label>Название *</Label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название события" />
         </div>
 
+        {/* 3. Описание */}
         <div className="space-y-2">
           <Label>Описание</Label>
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о событии" rows={3} />
         </div>
 
+        {/* 4. Обложка */}
         <div className="space-y-2">
           <Label>Обложка события</Label>
-          <Input type="file" accept="image/*" className="cursor-pointer" />
-          <p className="text-xs text-muted-foreground">Необязательно. Рекомендуемый размер: 16:9</p>
+          {coverPreview ? (
+            <div className="relative rounded-xl overflow-hidden">
+              <img src={coverPreview} alt="Обложка" className="w-full aspect-video object-cover" />
+              <button
+                type="button"
+                onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1.5 text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer hover:border-primary/50 transition-colors">
+              <ImagePlus className="w-8 h-8 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Нажмите для загрузки</span>
+              <span className="text-xs text-muted-foreground">Макс. 5 МБ • 16:9</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+            </label>
+          )}
         </div>
 
+        {/* 5. Уровень */}
+        <div className="space-y-2">
+          <Label>Уровень</Label>
+          <Select value={level} onValueChange={setLevel}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {EVENT_LEVELS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* 6. Продолжительность */}
         <div className="space-y-3 rounded-xl border bg-card p-4">
           <Label className="text-sm font-semibold">Продолжительность события *</Label>
           
@@ -155,6 +217,7 @@ export default function CreateEvent() {
           </div>
         </div>
 
+        {/* Остальные поля */}
         <div className="space-y-2">
           <Label>Адрес *</Label>
           <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Адрес проведения" />
