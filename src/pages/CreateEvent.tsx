@@ -23,6 +23,8 @@ export default function CreateEvent() {
   const [level, setLevel] = useState("any");
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [address, setAddress] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("10");
   const [isPrivate, setIsPrivate] = useState(false);
@@ -38,8 +40,16 @@ export default function CreateEvent() {
   const canCreatePaid = profile?.subscription_plan !== "free";
 
   const handleSubmit = async () => {
-    if (!title.trim() || !startDate || !startTime || !address.trim()) {
+    if (!title.trim() || !startDate || !startTime || !endDate || !endTime || !address.trim()) {
       toast.error("Заполните обязательные поля");
+      return;
+    }
+
+    const startDatetime = new Date(`${startDate}T${startTime}`).toISOString();
+    const endDatetime = new Date(`${endDate}T${endTime}`).toISOString();
+
+    if (new Date(endDatetime) <= new Date(startDatetime)) {
+      toast.error("Дата окончания должна быть позже даты начала");
       return;
     }
 
@@ -50,7 +60,6 @@ export default function CreateEvent() {
 
     setLoading(true);
 
-    const startDatetime = new Date(`${startDate}T${startTime}`).toISOString();
     const maxParts = parseInt(maxParticipants) || 10;
     const reserveLimit = Math.round(maxParts * 0.2);
 
@@ -62,6 +71,7 @@ export default function CreateEvent() {
         category,
         level,
         start_datetime: startDatetime,
+        end_datetime: endDatetime,
         address_text: address.trim(),
         max_participants: maxParts,
         reserve_limit: reserveLimit,
@@ -132,14 +142,23 @@ export default function CreateEvent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Дата *</Label>
-            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <div className="space-y-3 rounded-xl border bg-card p-4">
+          <Label className="text-sm font-semibold">Продолжительность события *</Label>
+          
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">С</span>
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Время *</Label>
-            <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+
+          <div className="space-y-1">
+            <span className="text-xs text-muted-foreground">До</span>
+            <div className="grid grid-cols-2 gap-3">
+              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
           </div>
         </div>
 
