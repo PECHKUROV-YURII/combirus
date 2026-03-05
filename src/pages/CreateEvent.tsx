@@ -108,6 +108,18 @@ export default function CreateEvent() {
 
       <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
         <div className="space-y-2">
+          <Label>Категория *</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {EVENT_CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label>Название *</Label>
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Название события" />
         </div>
@@ -117,29 +129,10 @@ export default function CreateEvent() {
           <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Расскажите о событии" rows={3} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>Категория</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {EVENT_CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Уровень</Label>
-            <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {EVENT_LEVELS.map((l) => (
-                  <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label>Обложка события</Label>
+          <Input type="file" accept="image/*" className="cursor-pointer" />
+          <p className="text-xs text-muted-foreground">Необязательно. Рекомендуемый размер: 16:9</p>
         </div>
 
         <div className="space-y-3 rounded-xl border bg-card p-4">
