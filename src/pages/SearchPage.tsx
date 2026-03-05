@@ -103,7 +103,10 @@ export default function SearchPage() {
               {d === "today" ? "Сегодня" : d === "tomorrow" ? "Завтра" : "Все даты"}
             </Badge>
           ))}
-          <div className="w-px bg-border shrink-0" />
+        </div>
+
+        {/* Paid filters */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           {paidFilter === null ? (
             <>
               <Badge
