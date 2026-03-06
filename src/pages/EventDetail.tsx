@@ -213,6 +213,43 @@ export default function EventDetail() {
         </div>
       </div>
 
+      {/* Private invite link */}
+      {event.is_private && event.private_invite_link && (
+        <div className="mx-4 mt-4 p-3 rounded-xl border bg-card space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <LinkIcon className="w-4 h-4 text-primary" />
+            Ссылка на событие
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Поделитесь ссылкой с теми, кого хотите пригласить
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 text-xs bg-muted rounded-lg px-3 py-2 truncate select-all">
+              {`${window.location.origin}/invite/${event.private_invite_link}`}
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/invite/${event.private_invite_link}`);
+                toast.success("Ссылка скопирована");
+              }}
+              className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/invite/${event.private_invite_link}`;
+                const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(event.title)}`;
+                window.open(tgUrl, "_blank");
+              }}
+              className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="px-4 py-4 space-y-4">
         {/* Role badge */}
         {user && (
