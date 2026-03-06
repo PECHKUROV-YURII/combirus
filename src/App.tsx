@@ -16,6 +16,7 @@ import ProfilePage from "./pages/ProfilePage";
 import EventDetail from "./pages/EventDetail";
 import FavoritesPage from "./pages/FavoritesPage";
 import SubscriptionPage from "./pages/SubscriptionPage";
+import InvitePage from "./pages/InvitePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
