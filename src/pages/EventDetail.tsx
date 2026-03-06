@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   ArrowLeft, Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
+  Copy, ExternalLink, Link as LinkIcon,
 } from "lucide-react";
 import { getCategoryLabel, getLevelLabel } from "@/lib/categories";
 
