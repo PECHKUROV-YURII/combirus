@@ -38,6 +38,7 @@ const App = () => (
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
             </Route>
+            <Route path="/invite/:code" element={<InvitePage />} />
             <Route path="/event/:id" element={<EventDetail />} />
             <Route path="/event/:id/chat" element={<EventChat />} />
             <Route path="/favorites" element={<FavoritesPage />} />
