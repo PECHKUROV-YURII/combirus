@@ -225,11 +225,11 @@ export default function EventDetail() {
           </p>
           <div className="flex items-center gap-2">
             <div className="flex-1 text-xs bg-muted rounded-lg px-3 py-2 truncate select-all">
-              {`${window.location.origin}/invite/${event.private_invite_link}`}
+              {`https://combirus.lovable.app/invite/${event.private_invite_link}`}
             </div>
             <button
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/invite/${event.private_invite_link}`);
+                navigator.clipboard.writeText(`https://combirus.lovable.app/invite/${event.private_invite_link}`);
                 toast.success("Ссылка скопирована");
               }}
               className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center hover:bg-accent transition-colors"
@@ -238,7 +238,7 @@ export default function EventDetail() {
             </button>
             <button
               onClick={() => {
-                const url = `${window.location.origin}/invite/${event.private_invite_link}`;
+                const url = `https://combirus.lovable.app/invite/${event.private_invite_link}`;
                 const tgUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(event.title)}`;
                 window.open(tgUrl, "_blank");
               }}
