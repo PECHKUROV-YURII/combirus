@@ -328,40 +328,139 @@ export default function EventDetail() {
 
         {/* Participants */}
         <div>
-          <h2 className="font-semibold text-sm mb-2">
+          <h2 className="font-semibold text-sm mb-3">
             Участники ({confirmedList.length}/{event.max_participants})
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {confirmedList.map((p) => (
-              <div
+          <div className="flex items-center">
+            {confirmedList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
+              <button
                 key={p.id}
-                className="flex items-center gap-1.5 bg-muted rounded-full px-2.5 py-1"
+                onClick={() => setSelectedProfile(p.profile)}
+                className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
               >
-                <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary font-semibold">
-                  {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                </div>
-                <span className="text-xs">{p.profile?.name || "Участник"}</span>
-              </div>
+                <Avatar className="w-10 h-10">
+                  {p.profile?.avatar_url ? (
+                    <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} />
+                  ) : null}
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                    {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
             ))}
+            {confirmedList.length > MAX_VISIBLE_AVATARS && (
+              <button
+                onClick={() => setShowAllParticipants(true)}
+                className="relative w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground hover:bg-accent transition-colors"
+                style={{ marginLeft: -10, zIndex: 0 }}
+              >
+                +{confirmedList.length - MAX_VISIBLE_AVATARS}
+              </button>
+            )}
           </div>
           {reserveList.length > 0 && (
-            <div className="mt-2">
-              <p className="text-xs text-muted-foreground mb-1">
+            <div className="mt-3">
+              <p className="text-xs text-muted-foreground mb-2">
                 Резерв ({reserveList.length}/{event.reserve_limit})
               </p>
-              <div className="flex flex-wrap gap-2">
-                {reserveList.map((p) => (
-                  <div
+              <div className="flex items-center">
+                {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
+                  <button
                     key={p.id}
-                    className="flex items-center gap-1.5 bg-muted rounded-full px-2.5 py-1"
+                    onClick={() => setSelectedProfile(p.profile)}
+                    className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                    style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
                   >
-                    <span className="text-xs">{p.profile?.name || "Участник"}</span>
-                  </div>
+                    <Avatar className="w-8 h-8">
+                      {p.profile?.avatar_url ? (
+                        <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} />
+                      ) : null}
+                      <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
+                        {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                 ))}
+                {reserveList.length > MAX_VISIBLE_AVATARS && (
+                  <button
+                    onClick={() => setShowAllParticipants(true)}
+                    className="relative w-8 h-8 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground hover:bg-accent transition-colors"
+                    style={{ marginLeft: -10, zIndex: 0 }}
+                  >
+                    +{reserveList.length - MAX_VISIBLE_AVATARS}
+                  </button>
+                )}
               </div>
             </div>
           )}
         </div>
+
+        {/* All participants dialog */}
+        <Dialog open={showAllParticipants} onOpenChange={setShowAllParticipants}>
+          <DialogContent className="max-w-sm max-h-[70vh] overflow-y-auto">
+            <h3 className="font-semibold mb-3">Все участники ({confirmedList.length})</h3>
+            <div className="space-y-2">
+              {confirmedList.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <Avatar className="w-10 h-10">
+                    {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                      {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                </button>
+              ))}
+            </div>
+            {reserveList.length > 0 && (
+              <>
+                <h4 className="font-semibold text-sm mt-4 mb-2 text-muted-foreground">Резерв ({reserveList.length})</h4>
+                <div className="space-y-2">
+                  {reserveList.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                      className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <Avatar className="w-10 h-10">
+                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                        <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">
+                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Profile preview dialog */}
+        <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
+          <DialogContent className="max-w-xs text-center">
+            <div className="flex flex-col items-center gap-3 py-2">
+              <Avatar className="w-20 h-20">
+                {selectedProfile?.avatar_url ? (
+                  <AvatarImage src={selectedProfile.avatar_url} alt={selectedProfile?.name} />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+                  {selectedProfile?.name?.[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <h3 className="font-semibold text-lg">{selectedProfile?.name || "Участник"}</h3>
+              {selectedProfile?.bio && (
+                <p className="text-sm text-muted-foreground">{selectedProfile.bio}</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Bottom actions */}
