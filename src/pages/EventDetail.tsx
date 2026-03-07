@@ -62,7 +62,7 @@ export default function EventDetail() {
     // Fetch participants
     const { data: parts } = await supabase
       .from("event_participants")
-      .select("*, profiles:user_id(name, avatar_url)")
+      .select("*")
       .eq("event_id", id)
       .in("status", ["confirmed", "reserve"]);
 
