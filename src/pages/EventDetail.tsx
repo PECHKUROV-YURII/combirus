@@ -73,7 +73,7 @@ export default function EventDetail() {
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url")
+        .select("user_id, name, avatar_url, bio")
         .in("user_id", userIds);
       profiles?.forEach((p: any) => {
         profilesMap[p.user_id] = p;
