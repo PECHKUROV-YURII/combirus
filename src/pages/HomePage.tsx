@@ -54,8 +54,25 @@ export default function HomePage() {
       .gte("start_datetime", now)
       .order("start_datetime", { ascending: true });
 
-    setParticipating(participatingEvents);
-    setOrganizing(organizingEvents || []);
+    // Fetch confirmed counts for all events
+    const allEvents = [...participatingEvents, ...(organizingEvents || [])];
+    const allIds = allEvents.map((e: any) => e.id);
+    let countMap: Record<string, number> = {};
+    if (allIds.length > 0) {
+      const { data: counts } = await supabase
+        .from("event_participants")
+        .select("event_id")
+        .in("event_id", allIds)
+        .eq("status", "confirmed");
+      if (counts) {
+        counts.forEach((c: any) => {
+          countMap[c.event_id] = (countMap[c.event_id] || 0) + 1;
+        });
+      }
+    }
+
+    setParticipating(participatingEvents.map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
+    setOrganizing((organizingEvents || []).map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
 
     // Auto-select tab with earliest event
     if (participatingEvents.length === 0 && (organizingEvents?.length ?? 0) > 0) {
