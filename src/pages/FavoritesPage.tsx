@@ -30,7 +30,23 @@ export default function FavoritesPage() {
         .select("*")
         .in("id", ids)
         .order("start_datetime", { ascending: true });
-      setEvents(data || []);
+      const eventsData = data || [];
+
+      // Fetch confirmed counts
+      let countMap: Record<string, number> = {};
+      if (eventsData.length > 0) {
+        const { data: counts } = await supabase
+          .from("event_participants")
+          .select("event_id")
+          .in("event_id", ids)
+          .eq("status", "confirmed");
+        if (counts) {
+          counts.forEach((c: any) => {
+            countMap[c.event_id] = (countMap[c.event_id] || 0) + 1;
+          });
+        }
+      }
+      setEvents(eventsData.map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
     } else {
       setEvents([]);
     }
