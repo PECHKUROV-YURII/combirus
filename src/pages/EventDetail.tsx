@@ -25,6 +25,10 @@ export default function EventDetail() {
   const [myStatus, setMyStatus] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showAllParticipants, setShowAllParticipants] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<any>(null);
+
+  const MAX_VISIBLE_AVATARS = 6;
 
   useEffect(() => {
     fetchEvent();
