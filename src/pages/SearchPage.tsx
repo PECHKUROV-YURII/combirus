@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "@/components/events/EventCard";
 import { supabase } from "@/integrations/supabase/client";
 import { EVENT_CATEGORIES } from "@/lib/categories";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-type DateFilter = "today" | "tomorrow" | "all";
+type DateFilter = "today" | "tomorrow" | "custom" | null;
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
