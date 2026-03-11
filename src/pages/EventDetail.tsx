@@ -465,7 +465,7 @@ export default function EventDetail() {
       </div>
 
       {/* Bottom actions */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
+      <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
         <div className="flex gap-2 max-w-lg mx-auto">
           {isOrganizer ? (
             <>
@@ -507,6 +507,7 @@ export default function EventDetail() {
           )}
         </div>
       </div>
+      <TabBar />
     </div>
   );
 }
