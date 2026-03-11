@@ -1,17 +1,23 @@
 import { useState, useEffect } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, CalendarIcon, X } from "lucide-react";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "@/components/events/EventCard";
 import { supabase } from "@/integrations/supabase/client";
 import { EVENT_CATEGORIES } from "@/lib/categories";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-type DateFilter = "today" | "tomorrow" | "all";
+type DateFilter = "today" | "tomorrow" | "custom" | null;
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("today");
+  const [dateFilter, setDateFilter] = useState<DateFilter>(null);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [paidFilter, setPaidFilter] = useState<boolean | null>(null);
   const [events, setEvents] = useState<any[]>([]);
@@ -19,7 +25,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchEvents();
-  }, [query, dateFilter, categoryFilter, paidFilter]);
+  }, [query, dateFilter, customDate, categoryFilter, paidFilter]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -43,7 +49,12 @@ export default function SearchPage() {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString();
       q = q.gte("start_datetime", start).lt("start_datetime", end);
+    } else if (dateFilter === "custom" && customDate) {
+      const start = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate()).toISOString();
+      const end = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate() + 1).toISOString();
+      q = q.gte("start_datetime", start).lt("start_datetime", end);
     }
+    // dateFilter === null → no date filter, show all sorted by date
 
     if (categoryFilter) {
       q = q.eq("category", categoryFilter);
@@ -93,16 +104,54 @@ export default function SearchPage() {
 
         {/* Date filters */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {(["today", "tomorrow", "all"] as DateFilter[]).map((d) => (
-            <Badge
-              key={d}
-              variant={dateFilter === d ? "default" : "outline"}
-              className="cursor-pointer whitespace-nowrap shrink-0"
-              onClick={() => setDateFilter(d)}
-            >
-              {d === "today" ? "Сегодня" : d === "tomorrow" ? "Завтра" : "Все даты"}
-            </Badge>
-          ))}
+          <Badge
+            variant={dateFilter === "today" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => { setDateFilter("today"); setCustomDate(undefined); }}
+          >
+            Сегодня
+          </Badge>
+          <Badge
+            variant={dateFilter === "tomorrow" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => { setDateFilter("tomorrow"); setCustomDate(undefined); }}
+          >
+            Завтра
+          </Badge>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Badge
+                variant={dateFilter === "custom" ? "default" : "outline"}
+                className="cursor-pointer whitespace-nowrap shrink-0 gap-1"
+              >
+                <CalendarIcon className="w-3 h-3" />
+                {dateFilter === "custom" && customDate
+                  ? format(customDate, "d MMM", { locale: ru })
+                  : "Выбрать дату"}
+              </Badge>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={customDate}
+                onSelect={(date) => {
+                  setCustomDate(date);
+                  setDateFilter("custom");
+                  setCalendarOpen(false);
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          <Badge
+            variant={dateFilter === null ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0 gap-1"
+            onClick={() => { setDateFilter(null); setCustomDate(undefined); }}
+          >
+            <X className="w-3 h-3" />
+            Сбросить
+          </Badge>
         </div>
 
         {/* Paid filters */}
