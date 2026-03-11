@@ -104,16 +104,54 @@ export default function SearchPage() {
 
         {/* Date filters */}
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          {(["today", "tomorrow", "all"] as DateFilter[]).map((d) => (
-            <Badge
-              key={d}
-              variant={dateFilter === d ? "default" : "outline"}
-              className="cursor-pointer whitespace-nowrap shrink-0"
-              onClick={() => setDateFilter(d)}
-            >
-              {d === "today" ? "Сегодня" : d === "tomorrow" ? "Завтра" : "Все даты"}
-            </Badge>
-          ))}
+          <Badge
+            variant={dateFilter === "today" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => { setDateFilter("today"); setCustomDate(undefined); }}
+          >
+            Сегодня
+          </Badge>
+          <Badge
+            variant={dateFilter === "tomorrow" ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0"
+            onClick={() => { setDateFilter("tomorrow"); setCustomDate(undefined); }}
+          >
+            Завтра
+          </Badge>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Badge
+                variant={dateFilter === "custom" ? "default" : "outline"}
+                className="cursor-pointer whitespace-nowrap shrink-0 gap-1"
+              >
+                <CalendarIcon className="w-3 h-3" />
+                {dateFilter === "custom" && customDate
+                  ? format(customDate, "d MMM", { locale: ru })
+                  : "Выбрать дату"}
+              </Badge>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={customDate}
+                onSelect={(date) => {
+                  setCustomDate(date);
+                  setDateFilter("custom");
+                  setCalendarOpen(false);
+                }}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          <Badge
+            variant={dateFilter === null ? "default" : "outline"}
+            className="cursor-pointer whitespace-nowrap shrink-0 gap-1"
+            onClick={() => { setDateFilter(null); setCustomDate(undefined); }}
+          >
+            <X className="w-3 h-3" />
+            Сбросить
+          </Badge>
         </div>
 
         {/* Paid filters */}
