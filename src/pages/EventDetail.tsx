@@ -200,13 +200,7 @@ export default function EventDetail() {
             <Calendar className="w-16 h-16" />
           </div>
         )}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 left-4 flex gap-2">
           <button
             onClick={toggleFavorite}
             className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
@@ -217,6 +211,12 @@ export default function EventDetail() {
             <Share2 className="w-5 h-5" />
           </button>
         </div>
+        <button
+          onClick={() => navigate("/home?tab=organizing")}
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Private invite link */}
