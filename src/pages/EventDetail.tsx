@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
-  ArrowLeft, Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
+  Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
   Copy, ExternalLink, Link as LinkIcon, X,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { getCategoryLabel, getLevelLabel } from "@/lib/categories";
+import { TabBar } from "@/components/layout/TabBar";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -190,7 +191,7 @@ export default function EventDetail() {
   const isOrganizer = user?.id === event.organizer_user_id;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Header image */}
       <div className="relative aspect-[16/9] bg-muted">
         {event.cover_images?.[0] ? (
@@ -200,13 +201,7 @@ export default function EventDetail() {
             <Calendar className="w-16 h-16" />
           </div>
         )}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 left-4 flex gap-2">
           <button
             onClick={toggleFavorite}
             className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
@@ -217,6 +212,12 @@ export default function EventDetail() {
             <Share2 className="w-5 h-5" />
           </button>
         </div>
+        <button
+          onClick={() => navigate("/home?tab=organizing")}
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Private invite link */}
@@ -464,7 +465,7 @@ export default function EventDetail() {
       </div>
 
       {/* Bottom actions */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
+      <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
         <div className="flex gap-2 max-w-lg mx-auto">
           {isOrganizer ? (
             <>
@@ -506,6 +507,7 @@ export default function EventDetail() {
           )}
         </div>
       </div>
+      <TabBar />
     </div>
   );
 }

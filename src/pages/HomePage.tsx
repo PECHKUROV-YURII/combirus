@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { EventCard } from "@/components/events/EventCard";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,9 @@ type Tab = "participating" | "organizing";
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [tab, setTab] = useState<Tab>("participating");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "organizing" ? "organizing" : "participating";
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [participating, setParticipating] = useState<any[]>([]);
   const [organizing, setOrganizing] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
