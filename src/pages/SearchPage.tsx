@@ -120,15 +120,20 @@ export default function SearchPage() {
           </Badge>
           <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
             <PopoverTrigger asChild>
-              <Badge
-                variant={dateFilter === "custom" ? "default" : "outline"}
-                className="cursor-pointer whitespace-nowrap shrink-0 gap-1"
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors",
+                  dateFilter === "custom"
+                    ? "border-transparent bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:bg-accent"
+                )}
               >
                 <CalendarIcon className="w-3 h-3" />
                 {dateFilter === "custom" && customDate
                   ? format(customDate, "d MMM", { locale: ru })
                   : "Выбрать дату"}
-              </Badge>
+              </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
