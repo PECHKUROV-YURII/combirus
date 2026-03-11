@@ -8,12 +8,13 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
-  ArrowLeft, Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
+  Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
   Copy, ExternalLink, Link as LinkIcon, X,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { getCategoryLabel, getLevelLabel } from "@/lib/categories";
+import { TabBar } from "@/components/layout/TabBar";
 
 export default function EventDetail() {
   const { id } = useParams();
