@@ -25,7 +25,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     fetchEvents();
-  }, [query, dateFilter, categoryFilter, paidFilter]);
+  }, [query, dateFilter, customDate, categoryFilter, paidFilter]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -49,7 +49,12 @@ export default function SearchPage() {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2).toISOString();
       q = q.gte("start_datetime", start).lt("start_datetime", end);
+    } else if (dateFilter === "custom" && customDate) {
+      const start = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate()).toISOString();
+      const end = new Date(customDate.getFullYear(), customDate.getMonth(), customDate.getDate() + 1).toISOString();
+      q = q.gte("start_datetime", start).lt("start_datetime", end);
     }
+    // dateFilter === null → no date filter, show all sorted by date
 
     if (categoryFilter) {
       q = q.eq("category", categoryFilter);
