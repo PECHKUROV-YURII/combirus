@@ -15,7 +15,9 @@ type DateFilter = "today" | "tomorrow" | "custom" | null;
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("today");
+  const [dateFilter, setDateFilter] = useState<DateFilter>(null);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [paidFilter, setPaidFilter] = useState<boolean | null>(null);
   const [events, setEvents] = useState<any[]>([]);
