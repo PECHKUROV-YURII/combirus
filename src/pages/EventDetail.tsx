@@ -191,7 +191,7 @@ export default function EventDetail() {
   const isOrganizer = user?.id === event.organizer_user_id;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       {/* Header image */}
       <div className="relative aspect-[16/9] bg-muted">
         {event.cover_images?.[0] ? (
