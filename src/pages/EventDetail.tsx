@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,22 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
-  Copy, ExternalLink, Link as LinkIcon, X,
+  Copy, ExternalLink, Link as LinkIcon, X, Trash2,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { getCategoryLabel, getLevelLabel } from "@/lib/categories";
 import { TabBar } from "@/components/layout/TabBar";
+
+const statusLabels: Record<string, { label: string; className: string }> = {
+  draft: { label: "Черновик", className: "bg-muted text-muted-foreground" },
+  published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
+  unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
+};
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -28,6 +38,9 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [showAllParticipants, setShowAllParticipants] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
+  const [publishDialog, setPublishDialog] = useState(false);
+  const [unpublishDialog, setUnpublishDialog] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState(false);
 
   const MAX_VISIBLE_AVATARS = 6;
 
@@ -52,7 +65,6 @@ export default function EventDetail() {
 
     setEvent(eventData);
 
-    // Fetch organizer profile
     const { data: orgProfile } = await supabase
       .from("profiles")
       .select("*")
@@ -60,14 +72,12 @@ export default function EventDetail() {
       .single();
     setOrganizer(orgProfile);
 
-    // Fetch participants
     const { data: parts } = await supabase
       .from("event_participants")
       .select("*")
       .eq("event_id", id)
       .in("status", ["confirmed", "reserve"]);
 
-    // We need to get profiles separately since we can't join on user_id directly
     const partsList = parts || [];
     const userIds = partsList.map((p: any) => p.user_id);
     let profilesMap: Record<string, any> = {};
@@ -88,7 +98,6 @@ export default function EventDetail() {
       }))
     );
 
-    // Check my status
     if (user) {
       const myPart = partsList.find((p: any) => p.user_id === user.id);
       setMyStatus(myPart?.status || null);
@@ -106,10 +115,7 @@ export default function EventDetail() {
   };
 
   const handleJoin = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     if (!event) return;
 
     const confirmedCount = participants.filter((p) => p.status === "confirmed").length;
@@ -126,17 +132,11 @@ export default function EventDetail() {
     }
 
     const { error } = await supabase.from("event_participants").insert({
-      event_id: event.id,
-      user_id: user.id,
-      status,
+      event_id: event.id, user_id: user.id, status,
     });
 
-    if (error) {
-      toast.error("Ошибка записи");
-    } else {
-      toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резерве");
-      fetchEvent();
-    }
+    if (error) { toast.error("Ошибка записи"); }
+    else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резерве"); fetchEvent(); }
   };
 
   const handleCancel = async () => {
@@ -147,33 +147,54 @@ export default function EventDetail() {
       .eq("event_id", event.id)
       .eq("user_id", user.id);
 
-    if (error) {
-      toast.error("Ошибка отмены");
-    } else {
-      toast.success("Запись отменена");
-      fetchEvent();
-    }
+    if (error) { toast.error("Ошибка отмены"); }
+    else { toast.success("Запись отменена"); fetchEvent(); }
   };
 
   const toggleFavorite = async () => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
+    if (!user) { navigate("/auth"); return; }
     if (isFavorite) {
-      await supabase
-        .from("favorite_events")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("event_id", event.id);
+      await supabase.from("favorite_events").delete().eq("user_id", user.id).eq("event_id", event.id);
       setIsFavorite(false);
     } else {
-      await supabase.from("favorite_events").insert({
-        user_id: user.id,
-        event_id: event.id,
-      });
+      await supabase.from("favorite_events").insert({ user_id: user.id, event_id: event.id });
       setIsFavorite(true);
     }
+  };
+
+  const handlePublish = async () => {
+    const { error } = await supabase.from("events").update({ status: "published" }).eq("id", event.id);
+    if (error) { toast.error("Ошибка публикации"); }
+    else { toast.success("Событие опубликовано!"); setEvent({ ...event, status: "published" }); }
+    setPublishDialog(false);
+  };
+
+  const handleUnpublish = async () => {
+    const { error } = await supabase.from("events").update({ status: "unpublished" }).eq("id", event.id);
+    if (error) { toast.error("Ошибка"); }
+    else { toast.success("Событие снято с публикации"); setEvent({ ...event, status: "unpublished" }); }
+    setUnpublishDialog(false);
+  };
+
+  const handleDelete = async () => {
+    const { error } = await supabase.from("events").delete().eq("id", event.id);
+    if (error) { toast.error("Ошибка удаления"); }
+    else { toast.success("Событие удалено"); navigate("/home?tab=organizing"); }
+    setDeleteDialog(false);
+  };
+
+  const handleShare = async () => {
+    const url = `https://combirus.lovable.app/event/${event.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: event.title, url }); } catch {}
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Ссылка скопирована");
+    }
+  };
+
+  const handleCopy = () => {
+    navigate(`/create?copy=${event.id}`);
   };
 
   if (loading) {
@@ -189,6 +210,7 @@ export default function EventDetail() {
   const confirmedList = participants.filter((p) => p.status === "confirmed");
   const reserveList = participants.filter((p) => p.status === "reserve");
   const isOrganizer = user?.id === event.organizer_user_id;
+  const statusInfo = statusLabels[event.status];
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -208,7 +230,10 @@ export default function EventDetail() {
           >
             <Heart className={`w-5 h-5 ${isFavorite ? "fill-primary text-primary" : ""}`} />
           </button>
-          <button className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+          <button
+            onClick={handleShare}
+            className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
+          >
             <Share2 className="w-5 h-5" />
           </button>
         </div>
@@ -271,9 +296,42 @@ export default function EventDetail() {
           </div>
         )}
 
-        {/* Title and badges */}
+        {/* Title, status, and organizer actions */}
         <div>
-          <h1 className="text-xl font-bold">{event.title}</h1>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold">{event.title}</h1>
+              {isOrganizer && statusInfo && (
+                <Badge className={`mt-1 ${statusInfo.className}`}>{statusInfo.label}</Badge>
+              )}
+            </div>
+            {isOrganizer && (
+              <div className="flex gap-1.5 shrink-0">
+                {event.status === "draft" || event.status === "unpublished" ? (
+                  <Button size="sm" onClick={() => setPublishDialog(true)}>
+                    Опубликовать
+                  </Button>
+                ) : event.status === "published" ? (
+                  <Button size="sm" variant="outline" onClick={() => setUnpublishDialog(true)}>
+                    Снять
+                  </Button>
+                ) : null}
+                <Button size="sm" variant="outline" onClick={handleCopy}>
+                  <Copy className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Share button above price */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 text-sm text-primary mt-2"
+          >
+            <Share2 className="w-4 h-4" />
+            Поделиться
+          </button>
+
           <div className="flex gap-2 mt-2">
             <Badge variant="secondary">{getCategoryLabel(event.category)}</Badge>
             {event.level !== "any" && (
@@ -397,6 +455,18 @@ export default function EventDetail() {
           )}
         </div>
 
+        {/* Delete button for organizer */}
+        {isOrganizer && (
+          <Button
+            variant="ghost"
+            className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => setDeleteDialog(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-1" />
+            Удалить событие
+          </Button>
+        )}
+
         {/* All participants dialog */}
         <Dialog open={showAllParticipants} onOpenChange={setShowAllParticipants}>
           <DialogContent className="max-w-sm max-h-[70vh] overflow-y-auto">
@@ -464,6 +534,56 @@ export default function EventDetail() {
         </Dialog>
       </div>
 
+      {/* Publish confirmation */}
+      <AlertDialog open={publishDialog} onOpenChange={setPublishDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Публикация события</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы хотите опубликовать событие?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Нет</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePublish}>Да</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Unpublish confirmation */}
+      <AlertDialog open={unpublishDialog} onOpenChange={setUnpublishDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Снятие с публикации</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите снять событие с публикации?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Нет</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnpublish}>Да</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteDialog} onOpenChange={setDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление события</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы уверены, что хотите удалить событие? Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Bottom actions */}
       <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
         <div className="flex gap-2 max-w-lg mx-auto">
@@ -501,8 +621,8 @@ export default function EventDetail() {
               </Button>
             </>
           ) : (
-            <Button className="flex-1" onClick={handleJoin}>
-              Записаться
+            <Button className="flex-1" onClick={handleJoin} disabled={event.status !== "published"}>
+              {event.status !== "published" ? "Запись недоступна" : "Записаться"}
             </Button>
           )}
         </div>

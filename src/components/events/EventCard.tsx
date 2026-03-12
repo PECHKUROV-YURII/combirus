@@ -5,6 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { getCategoryLabel } from "@/lib/categories";
 import { Badge } from "@/components/ui/badge";
 
+const statusConfig: Record<string, { label: string; className: string }> = {
+  draft: { label: "Черновик", className: "bg-muted text-muted-foreground" },
+  published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
+  unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
+};
+
 interface EventCardProps {
   event: {
     id: string;
@@ -17,12 +23,15 @@ interface EventCardProps {
     price: number | null;
     cover_images: string[];
     confirmed_count?: number;
+    status?: string;
   };
+  showStatus?: boolean;
 }
 
-export function EventCard({ event }: EventCardProps) {
+export function EventCard({ event, showStatus }: EventCardProps) {
   const navigate = useNavigate();
   const confirmed = event.confirmed_count ?? 0;
+  const statusInfo = event.status ? statusConfig[event.status] : undefined;
 
   return (
     <button
@@ -56,6 +65,9 @@ export function EventCard({ event }: EventCardProps) {
       </div>
       <div className="p-3 space-y-1.5">
         <h3 className="font-semibold text-sm line-clamp-1">{event.title}</h3>
+        {showStatus && statusInfo && (
+          <Badge className={`text-[10px] ${statusInfo.className}`}>{statusInfo.label}</Badge>
+        )}
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Calendar className="w-3.5 h-3.5" />
           <span>
