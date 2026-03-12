@@ -109,6 +109,7 @@ export default function CreateEvent() {
         payment_type: "onsite",
         organizer_user_id: user.id,
         cover_images: coverImages,
+        status: "draft",
       })
       .select()
       .single();
@@ -119,7 +120,7 @@ export default function CreateEvent() {
       toast.error("Ошибка создания события");
       console.error(error);
     } else {
-      toast.success("Событие создано!");
+      toast.success("Черновик события создан!");
       navigate(`/event/${data.id}`);
     }
   };

@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD CONSTRAINT events_status_check CHECK (status = ANY (ARRAY['draft'::text, 'published'::text, 'unpublished'::text, 'cancelled'::text]));

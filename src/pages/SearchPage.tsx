@@ -32,7 +32,7 @@ export default function SearchPage() {
     let q = supabase
       .from("events")
       .select("*")
-      .eq("status", "active")
+      .eq("status", "published")
       .eq("is_private", false)
       .order("start_datetime", { ascending: true });
 

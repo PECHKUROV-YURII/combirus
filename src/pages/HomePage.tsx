@@ -9,7 +9,7 @@ type Tab = "participating" | "organizing";
 
 export default function HomePage() {
   const { user } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const initialTab = searchParams.get("tab") === "organizing" ? "organizing" : "participating";
   const [tab, setTab] = useState<Tab>(initialTab);
   const [participating, setParticipating] = useState<any[]>([]);
@@ -24,8 +24,6 @@ export default function HomePage() {
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
-
-    const now = new Date().toISOString();
 
     // Events I'm participating in
     const { data: myParticipations } = await supabase
@@ -42,22 +40,20 @@ export default function HomePage() {
         .from("events")
         .select("*")
         .in("id", participatingIds)
-        .eq("status", "active")
-        .gte("start_datetime", now)
+        .eq("status", "published")
         .order("start_datetime", { ascending: true });
       participatingEvents = data || [];
     }
 
-    // Events I'm organizing
+    // Events I'm organizing — show ALL statuses
     const { data: organizingEvents } = await supabase
       .from("events")
       .select("*")
       .eq("organizer_user_id", user.id)
-      .eq("status", "active")
-      .gte("start_datetime", now)
+      .in("status", ["draft", "published", "unpublished"])
       .order("start_datetime", { ascending: true });
 
-    // Fetch confirmed counts for all events
+    // Fetch confirmed counts
     const allEvents = [...participatingEvents, ...(organizingEvents || [])];
     const allIds = allEvents.map((e: any) => e.id);
     let countMap: Record<string, number> = {};
@@ -78,7 +74,9 @@ export default function HomePage() {
     setOrganizing((organizingEvents || []).map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
 
     // Auto-select tab with earliest event
-    if (participatingEvents.length === 0 && (organizingEvents?.length ?? 0) > 0) {
+    if (searchParams.get("tab") === "organizing") {
+      setTab("organizing");
+    } else if (participatingEvents.length === 0 && (organizingEvents?.length ?? 0) > 0) {
       setTab("organizing");
     } else if (participatingEvents.length > 0 && (organizingEvents?.length ?? 0) > 0) {
       const pFirst = new Date(participatingEvents[0].start_datetime);
@@ -90,7 +88,6 @@ export default function HomePage() {
   };
 
   const currentEvents = tab === "participating" ? participating : organizing;
-  const otherCount = tab === "participating" ? organizing.length : participating.length;
 
   return (
     <div className="min-h-screen bg-background safe-top">
@@ -151,7 +148,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {currentEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event.id} event={event} showStatus={tab === "organizing"} />
             ))}
           </div>
         )}
