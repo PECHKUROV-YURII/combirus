@@ -109,6 +109,7 @@ export default function CreateEvent() {
         payment_type: "onsite",
         organizer_user_id: user.id,
         cover_images: coverImages,
+        status: "draft",
       })
       .select()
       .single();
