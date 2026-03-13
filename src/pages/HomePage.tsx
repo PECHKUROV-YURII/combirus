@@ -148,7 +148,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {currentEvents.map((event) => (
-              <EventCard key={event.id} event={event} showStatus={tab === "organizing"} />
+              <EventCard key={event.id} event={event} showStatus={tab === "organizing"} onCopied={fetchData} />
             ))}
           </div>
         )}
