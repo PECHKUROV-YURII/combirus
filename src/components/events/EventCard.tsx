@@ -45,7 +45,7 @@ interface EventCardProps {
   onStatusChanged?: () => void;
 }
 
-export function EventCard({ event, showStatus, onCopied }: EventCardProps) {
+export function EventCard({ event, showStatus, onCopied, onStatusChanged }: EventCardProps) {
   const navigate = useNavigate();
   const confirmed = event.confirmed_count ?? 0;
   const statusInfo = event.status ? statusConfig[event.status] : undefined;
