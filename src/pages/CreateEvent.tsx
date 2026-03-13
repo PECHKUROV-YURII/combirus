@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { ArrowLeft, ImagePlus } from "lucide-react";
 export default function CreateEvent() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -32,6 +34,39 @@ export default function CreateEvent() {
   const [price, setPrice] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [existingCoverImages, setExistingCoverImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!editId) return;
+    const fetchEvent = async () => {
+      const { data } = await supabase.from("events").select("*").eq("id", editId).single();
+      if (!data) return;
+      setTitle(data.title);
+      setDescription(data.description || "");
+      setCategory(data.category);
+      setLevel(data.level || "any");
+      setAddress(data.address_text);
+      setMaxParticipants(String(data.max_participants));
+      setIsPrivate(data.is_private || false);
+      setIsPaid(data.is_paid || false);
+      setPrice(data.price ? String(data.price) : "");
+      if (data.start_datetime) {
+        const s = new Date(data.start_datetime);
+        setStartDate(s.toISOString().slice(0, 10));
+        setStartTime(s.toISOString().slice(11, 16));
+      }
+      if (data.end_datetime) {
+        const e = new Date(data.end_datetime);
+        setEndDate(e.toISOString().slice(0, 10));
+        setEndTime(e.toISOString().slice(11, 16));
+      }
+      if (data.cover_images && data.cover_images.length > 0) {
+        setExistingCoverImages(data.cover_images);
+        setCoverPreview(data.cover_images[0]);
+      }
+    };
+    fetchEvent();
+  }, [editId]);
 
   if (!user) {
     navigate("/auth");
