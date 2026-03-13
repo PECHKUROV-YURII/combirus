@@ -316,9 +316,6 @@ export default function EventDetail() {
                     Снять
                   </Button>
                 ) : null}
-                <Button size="sm" variant="outline" onClick={handleCopy}>
-                  <Copy className="w-3.5 h-3.5" />
-                </Button>
               </div>
             )}
           </div>
