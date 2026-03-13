@@ -121,42 +121,53 @@ export default function CreateEvent() {
 
     setLoading(true);
 
-    const coverImages = await uploadCover();
+    let coverImages: string[];
+    if (coverFile) {
+      coverImages = await uploadCover();
+    } else {
+      coverImages = existingCoverImages;
+    }
+
     const maxParts = parseInt(maxParticipants) || 10;
     const reserveLimit = Math.round(maxParts * 0.2);
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert({
-        title: title.trim(),
-        description: description.trim() || null,
-        category,
-        level,
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
-        address_text: address.trim(),
-        max_participants: maxParts,
-        reserve_limit: reserveLimit,
-        is_private: isPrivate,
-        private_invite_link: isPrivate ? crypto.randomUUID() : null,
-        is_paid: isPaid,
-        price: isPaid ? parseFloat(price) || 0 : 0,
-        payment_type: "onsite",
+    const eventData = {
+      title: title.trim(),
+      description: description.trim() || null,
+      category,
+      level,
+      start_datetime: startDatetime,
+      end_datetime: endDatetime,
+      address_text: address.trim(),
+      max_participants: maxParts,
+      reserve_limit: reserveLimit,
+      is_private: isPrivate,
+      private_invite_link: isPrivate ? crypto.randomUUID() : null,
+      is_paid: isPaid,
+      price: isPaid ? parseFloat(price) || 0 : 0,
+      payment_type: "onsite" as const,
+      cover_images: coverImages,
+    };
+
+    let result;
+    if (editId) {
+      result = await supabase.from("events").update(eventData).eq("id", editId).select().single();
+    } else {
+      result = await supabase.from("events").insert({
+        ...eventData,
         organizer_user_id: user.id,
-        cover_images: coverImages,
         status: "draft",
-      })
-      .select()
-      .single();
+      }).select().single();
+    }
 
     setLoading(false);
 
-    if (error) {
-      toast.error("Ошибка создания события");
-      console.error(error);
+    if (result.error) {
+      toast.error(editId ? "Ошибка обновления события" : "Ошибка создания события");
+      console.error(result.error);
     } else {
-      toast.success("Черновик события создан!");
-      navigate(`/event/${data.id}`);
+      toast.success(editId ? "Событие обновлено!" : "Черновик события создан!");
+      navigate(`/event/${result.data.id}`);
     }
   };
 
