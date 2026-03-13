@@ -214,7 +214,7 @@ export default function CreateEvent() {
               <img src={coverPreview} alt="Обложка" className="w-full aspect-video object-cover" />
               <button
                 type="button"
-                onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                onClick={() => { setCoverFile(null); setCoverPreview(null); setExistingCoverImages([]); }}
                 className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1.5 text-foreground"
               >
                 ✕
