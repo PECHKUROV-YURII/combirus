@@ -42,6 +42,7 @@ interface EventCardProps {
   };
   showStatus?: boolean;
   onCopied?: () => void;
+  onStatusChanged?: () => void;
 }
 
 export function EventCard({ event, showStatus, onCopied }: EventCardProps) {
