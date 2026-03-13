@@ -301,19 +301,6 @@ export default function EventDetail() {
                 <Badge className={`mt-1 ${statusInfo.className}`}>{statusInfo.label}</Badge>
               )}
             </div>
-            {isOrganizer && (
-              <div className="flex gap-1.5 shrink-0">
-                {event.status === "draft" || event.status === "unpublished" ? (
-                  <Button size="sm" onClick={() => setPublishDialog(true)}>
-                    Опубликовать
-                  </Button>
-                ) : event.status === "published" ? (
-                  <Button size="sm" variant="outline" onClick={() => setUnpublishDialog(true)}>
-                    Снять
-                  </Button>
-                ) : null}
-              </div>
-            )}
           </div>
 
           {/* Share button above price */}
