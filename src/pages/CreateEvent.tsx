@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ import { ArrowLeft, ImagePlus } from "lucide-react";
 export default function CreateEvent() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("edit");
   const [loading, setLoading] = useState(false);
 
   const [title, setTitle] = useState("");
@@ -32,6 +34,39 @@ export default function CreateEvent() {
   const [price, setPrice] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [existingCoverImages, setExistingCoverImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!editId) return;
+    const fetchEvent = async () => {
+      const { data } = await supabase.from("events").select("*").eq("id", editId).single();
+      if (!data) return;
+      setTitle(data.title);
+      setDescription(data.description || "");
+      setCategory(data.category);
+      setLevel(data.level || "any");
+      setAddress(data.address_text);
+      setMaxParticipants(String(data.max_participants));
+      setIsPrivate(data.is_private || false);
+      setIsPaid(data.is_paid || false);
+      setPrice(data.price ? String(data.price) : "");
+      if (data.start_datetime) {
+        const s = new Date(data.start_datetime);
+        setStartDate(s.toISOString().slice(0, 10));
+        setStartTime(s.toISOString().slice(11, 16));
+      }
+      if (data.end_datetime) {
+        const e = new Date(data.end_datetime);
+        setEndDate(e.toISOString().slice(0, 10));
+        setEndTime(e.toISOString().slice(11, 16));
+      }
+      if (data.cover_images && data.cover_images.length > 0) {
+        setExistingCoverImages(data.cover_images);
+        setCoverPreview(data.cover_images[0]);
+      }
+    };
+    fetchEvent();
+  }, [editId]);
 
   if (!user) {
     navigate("/auth");
@@ -86,42 +121,53 @@ export default function CreateEvent() {
 
     setLoading(true);
 
-    const coverImages = await uploadCover();
+    let coverImages: string[];
+    if (coverFile) {
+      coverImages = await uploadCover();
+    } else {
+      coverImages = existingCoverImages;
+    }
+
     const maxParts = parseInt(maxParticipants) || 10;
     const reserveLimit = Math.round(maxParts * 0.2);
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert({
-        title: title.trim(),
-        description: description.trim() || null,
-        category,
-        level,
-        start_datetime: startDatetime,
-        end_datetime: endDatetime,
-        address_text: address.trim(),
-        max_participants: maxParts,
-        reserve_limit: reserveLimit,
-        is_private: isPrivate,
-        private_invite_link: isPrivate ? crypto.randomUUID() : null,
-        is_paid: isPaid,
-        price: isPaid ? parseFloat(price) || 0 : 0,
-        payment_type: "onsite",
+    const eventData = {
+      title: title.trim(),
+      description: description.trim() || null,
+      category,
+      level,
+      start_datetime: startDatetime,
+      end_datetime: endDatetime,
+      address_text: address.trim(),
+      max_participants: maxParts,
+      reserve_limit: reserveLimit,
+      is_private: isPrivate,
+      private_invite_link: isPrivate ? crypto.randomUUID() : null,
+      is_paid: isPaid,
+      price: isPaid ? parseFloat(price) || 0 : 0,
+      payment_type: "onsite" as const,
+      cover_images: coverImages,
+    };
+
+    let result;
+    if (editId) {
+      result = await supabase.from("events").update(eventData).eq("id", editId).select().single();
+    } else {
+      result = await supabase.from("events").insert({
+        ...eventData,
         organizer_user_id: user.id,
-        cover_images: coverImages,
         status: "draft",
-      })
-      .select()
-      .single();
+      }).select().single();
+    }
 
     setLoading(false);
 
-    if (error) {
-      toast.error("Ошибка создания события");
-      console.error(error);
+    if (result.error) {
+      toast.error(editId ? "Ошибка обновления события" : "Ошибка создания события");
+      console.error(result.error);
     } else {
-      toast.success("Черновик события создан!");
-      navigate(`/event/${data.id}`);
+      toast.success(editId ? "Событие обновлено!" : "Черновик события создан!");
+      navigate(`/event/${result.data.id}`);
     }
   };
 
@@ -131,7 +177,7 @@ export default function CreateEvent() {
         <button onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-semibold">Создать событие</h1>
+        <h1 className="text-lg font-semibold">{editId ? "Редактировать событие" : "Создать событие"}</h1>
       </div>
 
       <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
@@ -168,7 +214,7 @@ export default function CreateEvent() {
               <img src={coverPreview} alt="Обложка" className="w-full aspect-video object-cover" />
               <button
                 type="button"
-                onClick={() => { setCoverFile(null); setCoverPreview(null); }}
+                onClick={() => { setCoverFile(null); setCoverPreview(null); setExistingCoverImages([]); }}
                 className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm rounded-full p-1.5 text-foreground"
               >
                 ✕
@@ -252,7 +298,7 @@ export default function CreateEvent() {
         )}
 
         <Button className="w-full h-12" onClick={handleSubmit} disabled={loading}>
-          {loading ? "Создание..." : "Создать событие"}
+          {loading ? (editId ? "Сохранение..." : "Создание...") : (editId ? "Сохранить изменения" : "Создать событие")}
         </Button>
       </div>
     </div>
