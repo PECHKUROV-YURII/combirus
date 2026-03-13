@@ -165,12 +165,40 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
             </div>
           </button>
           {showStatus && (
-            <button
-              onClick={handleCopy}
-              className="shrink-0 text-xs text-primary font-medium px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
-            >
-              Сделать копию
-            </button>
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {(event.status === "draft" || event.status === "unpublished") && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const { error } = await supabase.from("events").update({ status: "published" }).eq("id", event.id);
+                    if (error) toast.error("Ошибка публикации");
+                    else { toast.success("Событие опубликовано!"); onStatusChanged?.(); }
+                  }}
+                  className="text-xs text-primary font-medium px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
+                >
+                  Опубликовать
+                </button>
+              )}
+              {event.status === "published" && (
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const { error } = await supabase.from("events").update({ status: "unpublished" }).eq("id", event.id);
+                    if (error) toast.error("Ошибка");
+                    else { toast.success("Снято с публикации"); onStatusChanged?.(); }
+                  }}
+                  className="text-xs text-destructive font-medium px-2 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors whitespace-nowrap"
+                >
+                  Снять с публикации
+                </button>
+              )}
+              <button
+                onClick={handleCopy}
+                className="text-xs text-primary font-medium px-2 py-1.5 rounded-lg hover:bg-primary/10 transition-colors whitespace-nowrap"
+              >
+                Сделать копию
+              </button>
+            </div>
           )}
         </div>
       </div>
