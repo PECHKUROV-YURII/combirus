@@ -298,7 +298,7 @@ export default function CreateEvent() {
         )}
 
         <Button className="w-full h-12" onClick={handleSubmit} disabled={loading}>
-          {loading ? "Создание..." : "Создать событие"}
+          {loading ? (editId ? "Сохранение..." : "Создание...") : (editId ? "Сохранить изменения" : "Создать событие")}
         </Button>
       </div>
     </div>
