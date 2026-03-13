@@ -177,7 +177,7 @@ export default function CreateEvent() {
         <button onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-semibold">Создать событие</h1>
+        <h1 className="text-lg font-semibold">{editId ? "Редактировать событие" : "Создать событие"}</h1>
       </div>
 
       <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
