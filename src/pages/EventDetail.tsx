@@ -193,10 +193,6 @@ export default function EventDetail() {
     }
   };
 
-  const handleCopy = () => {
-    navigate(`/create?copy=${event.id}`);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
