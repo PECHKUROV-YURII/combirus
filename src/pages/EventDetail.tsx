@@ -337,14 +337,6 @@ export default function EventDetail() {
             </div>
           </div>
 
-          {/* Share button above price */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 text-sm text-primary mt-2"
-          >
-            <Share2 className="w-4 h-4" />
-            Поделиться
-          </button>
 
           <div className="flex gap-2 mt-2">
             <Badge variant="secondary">{getCategoryLabel(event.category)}</Badge>
