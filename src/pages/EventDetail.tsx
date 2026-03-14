@@ -9,8 +9,9 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
-  Copy, ExternalLink, Link as LinkIcon, X, Trash2,
+  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
