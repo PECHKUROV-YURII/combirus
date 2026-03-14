@@ -9,8 +9,9 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
-  Copy, ExternalLink, Link as LinkIcon, X, Trash2,
+  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -226,12 +227,45 @@ export default function EventDetail() {
           >
             <Heart className={`w-5 h-5 ${isFavorite ? "fill-primary text-primary" : ""}`} />
           </button>
-          <button
-            onClick={handleShare}
-            className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center">
+                <Share2 className="w-5 h-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-1" align="start">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`https://combirus.lovable.app/event/${event.id}`);
+                  toast.success("Ссылка скопирована");
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                Скопировать ссылку
+              </button>
+              <button
+                onClick={() => {
+                  const url = `https://combirus.lovable.app/event/${event.id}`;
+                  window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(event.title)}`, "_blank");
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+              >
+                <Send className="w-4 h-4" />
+                Telegram
+              </button>
+              <button
+                onClick={() => {
+                  const url = `https://combirus.lovable.app/event/${event.id}`;
+                  window.open(`https://wa.me/?text=${encodeURIComponent(event.title + " " + url)}`, "_blank");
+                }}
+                className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
         <button
           onClick={() => navigate("/home?tab=organizing")}
@@ -303,14 +337,6 @@ export default function EventDetail() {
             </div>
           </div>
 
-          {/* Share button above price */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 text-sm text-primary mt-2"
-          >
-            <Share2 className="w-4 h-4" />
-            Поделиться
-          </button>
 
           <div className="flex gap-2 mt-2">
             <Badge variant="secondary">{getCategoryLabel(event.category)}</Badge>
