@@ -40,7 +40,7 @@ export default function HomePage() {
         .from("events")
         .select("*")
         .in("id", participatingIds)
-        .eq("status", "published")
+        .in("status", ["published", "unpublished"])
         .order("start_datetime", { ascending: true });
       participatingEvents = data || [];
     }
