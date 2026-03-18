@@ -208,7 +208,10 @@ export default function EventDetail() {
   const confirmedList = participants.filter((p) => p.status === "confirmed");
   const reserveList = participants.filter((p) => p.status === "reserve");
   const isOrganizer = user?.id === event.organizer_user_id;
-  const statusInfo = statusLabels[event.status];
+  const isParticipant = myStatus === "confirmed" || myStatus === "reserve";
+  // Organizer sees actual status; participants see "Отменено" for unpublished events
+  const displayStatus = !isOrganizer && isParticipant && event.status === "unpublished" ? "cancelled" : event.status;
+  const statusInfo = statusLabels[displayStatus];
 
   return (
     <div className="min-h-screen bg-background pb-32">
