@@ -11,6 +11,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   draft: { label: "Черновик", className: "bg-muted text-muted-foreground" },
   published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
   unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  cancelled: { label: "Отменено", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 interface EventCardProps {
@@ -164,7 +165,7 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
               )}
             </div>
           </button>
-          {showStatus && (
+          {showStatus && event.status !== "cancelled" && (
             <div className="flex flex-col items-end gap-1 shrink-0">
               {(event.status === "draft" || event.status === "unpublished") && (
                 <button
@@ -183,9 +184,24 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
+                    // Check if event has active participants
+                    const { data: activeParts } = await supabase
+                      .from("event_participants")
+                      .select("id")
+                      .eq("event_id", event.id)
+                      .in("status", ["confirmed", "reserve"]);
+                    
                     const { error } = await supabase.from("events").update({ status: "unpublished" }).eq("id", event.id);
-                    if (error) toast.error("Ошибка");
-                    else { toast.success("Снято с публикации"); onStatusChanged?.(); }
+                    if (error) {
+                      toast.error("Ошибка");
+                    } else {
+                      if (activeParts && activeParts.length > 0) {
+                        toast.success("Событие снято с публикации. Участники увидят его как отменённое.");
+                      } else {
+                        toast.success("Снято с публикации");
+                      }
+                      onStatusChanged?.();
+                    }
                   }}
                   className="text-xs text-destructive font-medium px-2 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors whitespace-nowrap"
                 >

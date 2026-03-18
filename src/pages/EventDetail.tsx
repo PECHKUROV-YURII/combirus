@@ -25,6 +25,7 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   draft: { label: "Черновик", className: "bg-muted text-muted-foreground" },
   published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
   unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  cancelled: { label: "Отменено", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 export default function EventDetail() {
@@ -207,7 +208,10 @@ export default function EventDetail() {
   const confirmedList = participants.filter((p) => p.status === "confirmed");
   const reserveList = participants.filter((p) => p.status === "reserve");
   const isOrganizer = user?.id === event.organizer_user_id;
-  const statusInfo = statusLabels[event.status];
+  const isParticipant = myStatus === "confirmed" || myStatus === "reserve";
+  // Organizer sees actual status; participants see "Отменено" for unpublished events
+  const displayStatus = !isOrganizer && isParticipant && event.status === "unpublished" ? "cancelled" : event.status;
+  const statusInfo = statusLabels[displayStatus];
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -333,6 +337,9 @@ export default function EventDetail() {
               <h1 className="text-xl font-bold">{event.title}</h1>
               {isOrganizer && statusInfo && (
                 <Badge className={`mt-1 ${statusInfo.className}`}>{statusInfo.label}</Badge>
+              )}
+              {!isOrganizer && isParticipant && event.status === "unpublished" && (
+                <Badge className={`mt-1 ${statusLabels.cancelled.className}`}>{statusLabels.cancelled.label}</Badge>
               )}
             </div>
           </div>

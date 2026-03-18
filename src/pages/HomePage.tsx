@@ -40,7 +40,7 @@ export default function HomePage() {
         .from("events")
         .select("*")
         .in("id", participatingIds)
-        .eq("status", "published")
+        .in("status", ["published", "unpublished"])
         .order("start_datetime", { ascending: true });
       participatingEvents = data || [];
     }
@@ -70,7 +70,12 @@ export default function HomePage() {
       }
     }
 
-    setParticipating(participatingEvents.map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
+    // For participating tab: show unpublished events as "cancelled" for display
+    setParticipating(participatingEvents.map((e: any) => ({
+      ...e,
+      confirmed_count: countMap[e.id] || 0,
+      displayStatus: e.status === "unpublished" ? "cancelled" : undefined,
+    })));
     setOrganizing((organizingEvents || []).map((e: any) => ({ ...e, confirmed_count: countMap[e.id] || 0 })));
 
     // Auto-select tab with earliest event
@@ -148,7 +153,13 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {currentEvents.map((event) => (
-              <EventCard key={event.id} event={event} showStatus={tab === "organizing"} onCopied={fetchData} onStatusChanged={fetchData} />
+              <EventCard
+                key={event.id}
+                event={tab === "participating" && event.displayStatus ? { ...event, status: event.displayStatus } : event}
+                showStatus={tab === "organizing" || (tab === "participating" && event.displayStatus === "cancelled")}
+                onCopied={fetchData}
+                onStatusChanged={fetchData}
+              />
             ))}
           </div>
         )}
