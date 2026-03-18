@@ -153,7 +153,13 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {currentEvents.map((event) => (
-              <EventCard key={event.id} event={event} showStatus={tab === "organizing"} onCopied={fetchData} onStatusChanged={fetchData} />
+              <EventCard
+                key={event.id}
+                event={tab === "participating" && event.displayStatus ? { ...event, status: event.displayStatus } : event}
+                showStatus={tab === "organizing" || (tab === "participating" && event.displayStatus === "cancelled")}
+                onCopied={fetchData}
+                onStatusChanged={fetchData}
+              />
             ))}
           </div>
         )}

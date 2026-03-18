@@ -338,6 +338,9 @@ export default function EventDetail() {
               {isOrganizer && statusInfo && (
                 <Badge className={`mt-1 ${statusInfo.className}`}>{statusInfo.label}</Badge>
               )}
+              {!isOrganizer && isParticipant && event.status === "unpublished" && (
+                <Badge className={`mt-1 ${statusLabels.cancelled.className}`}>{statusLabels.cancelled.label}</Badge>
+              )}
             </div>
           </div>
 

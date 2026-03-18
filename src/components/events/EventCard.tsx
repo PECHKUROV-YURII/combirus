@@ -184,9 +184,24 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
                 <button
                   onClick={async (e) => {
                     e.stopPropagation();
+                    // Check if event has active participants
+                    const { data: activeParts } = await supabase
+                      .from("event_participants")
+                      .select("id")
+                      .eq("event_id", event.id)
+                      .in("status", ["confirmed", "reserve"]);
+                    
                     const { error } = await supabase.from("events").update({ status: "unpublished" }).eq("id", event.id);
-                    if (error) toast.error("Ошибка");
-                    else { toast.success("Снято с публикации"); onStatusChanged?.(); }
+                    if (error) {
+                      toast.error("Ошибка");
+                    } else {
+                      if (activeParts && activeParts.length > 0) {
+                        toast.success("Событие снято с публикации. Участники увидят его как отменённое.");
+                      } else {
+                        toast.success("Снято с публикации");
+                      }
+                      onStatusChanged?.();
+                    }
                   }}
                   className="text-xs text-destructive font-medium px-2 py-1.5 rounded-lg hover:bg-destructive/10 transition-colors whitespace-nowrap"
                 >
