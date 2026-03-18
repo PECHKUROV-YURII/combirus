@@ -25,6 +25,7 @@ const statusLabels: Record<string, { label: string; className: string }> = {
   draft: { label: "Черновик", className: "bg-muted text-muted-foreground" },
   published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
   unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  cancelled: { label: "Отменено", className: "bg-destructive/10 text-destructive border-destructive/20" },
 };
 
 export default function EventDetail() {
