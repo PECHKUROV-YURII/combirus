@@ -48,6 +48,7 @@ export default function CreateEvent() {
       setLevel(data.level || "any");
       setAddress(data.address_text);
       setMaxParticipants(String(data.max_participants));
+      setMinParticipants(String((data as any).min_participants || 1));
       setIsPrivate(data.is_private || false);
       setIsPaid(data.is_paid || false);
       setPrice(data.price ? String(data.price) : "");
