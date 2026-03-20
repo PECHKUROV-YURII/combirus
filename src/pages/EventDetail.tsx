@@ -408,7 +408,6 @@ export default function EventDetail() {
               Мин. для проведения: {(event as any).min_participants}
             </p>
           )}
-          </h2>
           <div className="flex items-center">
             {confirmedList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
               <button
