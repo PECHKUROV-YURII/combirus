@@ -32,6 +32,7 @@ export default function CreateEvent() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState("");
+  const [minParticipants, setMinParticipants] = useState("1");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [existingCoverImages, setExistingCoverImages] = useState<string[]>([]);
