@@ -148,6 +148,7 @@ export type Database = {
           lng: number | null
           location_id: string | null
           max_participants: number
+          min_participants: number
           organizer_user_id: string
           payment_type: string | null
           price: number | null
@@ -175,6 +176,7 @@ export type Database = {
           lng?: number | null
           location_id?: string | null
           max_participants?: number
+          min_participants?: number
           organizer_user_id: string
           payment_type?: string | null
           price?: number | null
@@ -202,6 +204,7 @@ export type Database = {
           lng?: number | null
           location_id?: string | null
           max_participants?: number
+          min_participants?: number
           organizer_user_id?: string
           payment_type?: string | null
           price?: number | null
