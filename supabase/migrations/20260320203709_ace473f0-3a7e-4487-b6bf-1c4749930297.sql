@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN min_participants integer NOT NULL DEFAULT 1;

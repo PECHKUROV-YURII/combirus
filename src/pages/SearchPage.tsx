@@ -29,18 +29,19 @@ export default function SearchPage() {
 
   const fetchEvents = async () => {
     setLoading(true);
+    const now = new Date();
     let q = supabase
       .from("events")
       .select("*")
       .eq("status", "published")
       .eq("is_private", false)
+      .gte("start_datetime", now.toISOString())
       .order("start_datetime", { ascending: true });
 
     if (query) {
       q = q.ilike("title", `%${query}%`);
     }
 
-    const now = new Date();
     if (dateFilter === "today") {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();

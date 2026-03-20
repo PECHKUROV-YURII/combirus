@@ -400,9 +400,14 @@ export default function EventDetail() {
 
         {/* Participants */}
         <div>
-          <h2 className="font-semibold text-sm mb-3">
+          <h2 className="font-semibold text-sm mb-1">
             Участники ({confirmedList.length}/{event.max_participants})
           </h2>
+          {isOrganizer && (event as any).min_participants > 1 && (
+            <p className="text-xs text-muted-foreground mb-3">
+              Мин. для проведения: {(event as any).min_participants}
+            </p>
+          )}
           <div className="flex items-center">
             {confirmedList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
               <button

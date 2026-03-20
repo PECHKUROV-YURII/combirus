@@ -32,6 +32,7 @@ export default function CreateEvent() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
   const [price, setPrice] = useState("");
+  const [minParticipants, setMinParticipants] = useState("1");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [existingCoverImages, setExistingCoverImages] = useState<string[]>([]);
@@ -47,6 +48,7 @@ export default function CreateEvent() {
       setLevel(data.level || "any");
       setAddress(data.address_text);
       setMaxParticipants(String(data.max_participants));
+      setMinParticipants(String((data as any).min_participants || 1));
       setIsPrivate(data.is_private || false);
       setIsPaid(data.is_paid || false);
       setPrice(data.price ? String(data.price) : "");
@@ -129,6 +131,7 @@ export default function CreateEvent() {
     }
 
     const maxParts = parseInt(maxParticipants) || 10;
+    const minParts = Math.min(parseInt(minParticipants) || 1, maxParts);
     const reserveLimit = Math.round(maxParts * 0.2);
 
     const eventData = {
@@ -140,6 +143,7 @@ export default function CreateEvent() {
       end_datetime: endDatetime,
       address_text: address.trim(),
       max_participants: maxParts,
+      min_participants: minParts,
       reserve_limit: reserveLimit,
       is_private: isPrivate,
       private_invite_link: isPrivate ? crypto.randomUUID() : null,
@@ -273,6 +277,12 @@ export default function CreateEvent() {
         <div className="space-y-2">
           <Label>Макс. участников</Label>
           <Input type="number" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} min="2" />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Мин. участников для проведения</Label>
+          <p className="text-xs text-muted-foreground">Если за 2 часа до начала участников меньше — событие автоматически отменяется</p>
+          <Input type="number" value={minParticipants} onChange={(e) => setMinParticipants(e.target.value)} min="1" />
         </div>
 
         <div className="flex items-center justify-between py-2">
