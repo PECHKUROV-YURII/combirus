@@ -42,7 +42,6 @@ export default function SearchPage() {
       q = q.ilike("title", `%${query}%`);
     }
 
-    const now = new Date();
     if (dateFilter === "today") {
       const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
       const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();

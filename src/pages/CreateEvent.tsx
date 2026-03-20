@@ -279,6 +279,12 @@ export default function CreateEvent() {
           <Input type="number" value={maxParticipants} onChange={(e) => setMaxParticipants(e.target.value)} min="2" />
         </div>
 
+        <div className="space-y-2">
+          <Label>Мин. участников для проведения</Label>
+          <p className="text-xs text-muted-foreground">Если за 2 часа до начала участников меньше — событие автоматически отменяется</p>
+          <Input type="number" value={minParticipants} onChange={(e) => setMinParticipants(e.target.value)} min="1" />
+        </div>
+
         <div className="flex items-center justify-between py-2">
           <Label>Приватное событие</Label>
           <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
