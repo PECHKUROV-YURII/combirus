@@ -148,7 +148,10 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Calendar className="w-3.5 h-3.5 shrink-0" />
               <span>
-                {format(new Date(event.start_datetime), "d MMM, HH:mm", { locale: ru })}
+                {format(new Date(event.start_datetime), "d MMMM", { locale: ru })}
+                {" | "}
+                {format(new Date(event.start_datetime), "HH:mm", { locale: ru })}
+                {event.end_datetime && ` - ${format(new Date(event.end_datetime), "HH:mm", { locale: ru })}`}
               </span>
             </div>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
