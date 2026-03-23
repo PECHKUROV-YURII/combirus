@@ -12,6 +12,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   published: { label: "Опубликовано", className: "bg-primary/10 text-primary border-primary/20" },
   unpublished: { label: "Снято с публикации", className: "bg-destructive/10 text-destructive border-destructive/20" },
   cancelled: { label: "Отменено", className: "bg-destructive/10 text-destructive border-destructive/20" },
+  completed: { label: "Завершено", className: "bg-green-500/10 text-green-700 border-green-500/20" },
 };
 
 interface EventCardProps {
