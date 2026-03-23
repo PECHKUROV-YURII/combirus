@@ -16,10 +16,28 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Find published events starting within the next 2 hours
     const now = new Date();
     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
+    // 1. Mark past published events as "completed" (end_datetime or start_datetime already passed)
+    const { data: pastEvents, error: pastError } = await supabase
+      .from("events")
+      .select("id, title, end_datetime, start_datetime")
+      .eq("status", "published")
+      .lte("start_datetime", now.toISOString());
+
+    if (!pastError && pastEvents) {
+      for (const ev of pastEvents) {
+        // Event is completed if end_datetime passed, or if no end_datetime then start_datetime passed
+        const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
+        if (endTime <= now) {
+          await supabase.from("events").update({ status: "completed" }).eq("id", ev.id);
+          console.log(`Event "${ev.title}" (${ev.id}) marked as completed`);
+        }
+      }
+    }
+
+    // 2. Auto-cancel published events starting within 2 hours with insufficient participants
     const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("id, title, min_participants, organizer_user_id")
@@ -35,45 +53,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!events || events.length === 0) {
-      return new Response(JSON.stringify({ message: "No events to check", cancelled: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const cancelledIds: string[] = [];
 
-    for (const event of events) {
-      // Count confirmed participants
-      const { count } = await supabase
-        .from("event_participants")
-        .select("id", { count: "exact", head: true })
-        .eq("event_id", event.id)
-        .eq("status", "confirmed");
+    if (events) {
+      for (const event of events) {
+        const { count } = await supabase
+          .from("event_participants")
+          .select("id", { count: "exact", head: true })
+          .eq("event_id", event.id)
+          .eq("status", "confirmed");
 
-      const confirmedCount = count || 0;
+        const confirmedCount = count || 0;
 
-      if (confirmedCount < event.min_participants) {
-        // Not enough participants — cancel (set to unpublished)
-        // If there are participants, they'll see it as "cancelled"
-        // If no participants, it just gets hidden
-        const newStatus = confirmedCount > 0 ? "unpublished" : "cancelled";
-
-        await supabase
-          .from("events")
-          .update({ status: newStatus })
-          .eq("id", event.id);
-
-        cancelledIds.push(event.id);
-        console.log(
-          `Event "${event.title}" (${event.id}) auto-cancelled: ${confirmedCount}/${event.min_participants} participants, status → ${newStatus}`
-        );
+        if (confirmedCount < event.min_participants) {
+          const newStatus = confirmedCount > 0 ? "unpublished" : "cancelled";
+          await supabase.from("events").update({ status: newStatus }).eq("id", event.id);
+          cancelledIds.push(event.id);
+          console.log(
+            `Event "${event.title}" (${event.id}) auto-cancelled: ${confirmedCount}/${event.min_participants} participants, status → ${newStatus}`
+          );
+        }
       }
     }
 
     return new Response(
       JSON.stringify({
-        message: `Checked ${events.length} events, cancelled ${cancelledIds.length}`,
+        message: `Checked events, cancelled ${cancelledIds.length}`,
         cancelled: cancelledIds.length,
         cancelledIds,
       }),

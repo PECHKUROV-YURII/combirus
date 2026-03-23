@@ -169,7 +169,7 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
               )}
             </div>
           </button>
-          {showStatus && event.status !== "cancelled" && (
+          {showStatus && event.status !== "cancelled" && event.status !== "completed" && (
             <div className="flex flex-col items-end gap-1 shrink-0">
               {(event.status === "draft" || event.status === "unpublished") && (
                 <button
