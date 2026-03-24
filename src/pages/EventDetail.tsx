@@ -117,20 +117,23 @@ export default function EventDetail() {
     setLoading(false);
   };
 
-  const handleJoin = async () => {
+  const getReserveLimit = (maxParticipants: number) => Math.ceil(maxParticipants * 0.3);
+
+  const handleJoin = async (forceReserve = false) => {
     if (!user) { navigate("/auth"); return; }
     if (!event) return;
 
     const confirmedCount = participants.filter((p) => p.status === "confirmed").length;
     const reserveCount = participants.filter((p) => p.status === "reserve").length;
+    const reserveLimit = getReserveLimit(event.max_participants);
 
     let status: string;
-    if (confirmedCount < event.max_participants) {
+    if (!forceReserve && confirmedCount < event.max_participants) {
       status = "confirmed";
-    } else if (reserveCount < event.reserve_limit) {
+    } else if (reserveCount < reserveLimit) {
       status = "reserve";
     } else {
-      toast.error("Мест нет");
+      toast.error("Мест нет, резерв заполнен");
       return;
     }
 
@@ -139,7 +142,7 @@ export default function EventDetail() {
     });
 
     if (error) { toast.error("Ошибка записи"); }
-    else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резерве"); fetchEvent(); }
+    else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резервном списке"); fetchEvent(); }
   };
 
   const handleCancel = async () => {
