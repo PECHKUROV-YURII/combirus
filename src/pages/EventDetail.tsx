@@ -117,7 +117,10 @@ export default function EventDetail() {
     setLoading(false);
   };
 
-  const getReserveLimit = (maxParticipants: number) => Math.ceil(maxParticipants * 0.3);
+  const getReserveLimit = (maxParticipants: number, storedLimit?: number | null) => {
+    if (typeof storedLimit === "number" && storedLimit > 0) return storedLimit;
+    return Math.ceil(maxParticipants * 0.3);
+  };
 
   const handleJoin = async (forceReserve = false) => {
     if (!user) { navigate("/auth"); return; }
@@ -125,7 +128,7 @@ export default function EventDetail() {
 
     const confirmedCount = participants.filter((p) => p.status === "confirmed").length;
     const reserveCount = participants.filter((p) => p.status === "reserve").length;
-    const reserveLimit = getReserveLimit(event.max_participants);
+    const reserveLimit = getReserveLimit(event.max_participants, event.reserve_limit);
 
     let status: string;
     if (!forceReserve && confirmedCount < event.max_participants) {
@@ -137,9 +140,30 @@ export default function EventDetail() {
       return;
     }
 
-    const { error } = await supabase.from("event_participants").insert({
-      event_id: event.id, user_id: user.id, status,
-    });
+    const { data: existingParticipation, error: existingParticipationError } = await supabase
+      .from("event_participants")
+      .select("id, status")
+      .eq("event_id", event.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingParticipationError) {
+      toast.error("Ошибка записи");
+      return;
+    }
+
+    const request = existingParticipation
+      ? supabase
+          .from("event_participants")
+          .update({ status, joined_at: new Date().toISOString() })
+          .eq("id", existingParticipation.id)
+      : supabase.from("event_participants").insert({
+          event_id: event.id,
+          user_id: user.id,
+          status,
+        });
+
+    const { error } = await request;
 
     if (error) { toast.error("Ошибка записи"); }
     else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резервном списке"); fetchEvent(); }
@@ -148,6 +172,19 @@ export default function EventDetail() {
   const handleCancel = async () => {
     if (!user || !event) return;
     const wasPreviouslyConfirmed = myStatus === "confirmed";
+
+    if (wasPreviouslyConfirmed) {
+      const { error: chatError } = await supabase.from("event_chat_messages").insert({
+        event_id: event.id,
+        sender_user_id: user.id,
+        message_text: "⚡ Освободилось место! Запишитесь, пока оно свободно.",
+      });
+
+      if (chatError) {
+        console.error("Chat notification error:", chatError);
+      }
+    }
+
     const { error } = await supabase
       .from("event_participants")
       .update({ status: "cancelled" })
@@ -155,15 +192,6 @@ export default function EventDetail() {
       .eq("user_id", user.id);
 
     if (error) { toast.error("Ошибка отмены"); return; }
-
-    // If a confirmed participant left, notify the chat about the free spot
-    if (wasPreviouslyConfirmed) {
-      await supabase.from("event_chat_messages").insert({
-        event_id: event.id,
-        sender_user_id: "00000000-0000-0000-0000-000000000000",
-        message_text: "⚡ Освободилось место! Запишитесь, пока оно свободно.",
-      });
-    }
 
     toast.success("Запись отменена");
     fetchEvent();
@@ -455,7 +483,7 @@ export default function EventDetail() {
           {reserveList.length > 0 && (
             <div className="mt-3">
               <p className="text-xs text-muted-foreground mb-2">
-                Резерв ({reserveList.length}/{getReserveLimit(event.max_participants)})
+                 Резерв ({reserveList.length}/{getReserveLimit(event.max_participants, event.reserve_limit)})
               </p>
               <div className="flex items-center">
                 {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
@@ -657,7 +685,7 @@ export default function EventDetail() {
           ) : (() => {
             const cCount = participants.filter((p) => p.status === "confirmed").length;
             const rCount = participants.filter((p) => p.status === "reserve").length;
-            const rLimit = getReserveLimit(event.max_participants);
+            const rLimit = getReserveLimit(event.max_participants, event.reserve_limit);
             const mainFull = cCount >= event.max_participants;
             const reserveFull = rCount >= rLimit;
 
