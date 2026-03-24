@@ -655,11 +655,27 @@ export default function EventDetail() {
                 Отменить запись
               </Button>
             </>
-          ) : (
-            <Button className="flex-1" onClick={handleJoin} disabled={event.status !== "published"}>
-              {event.status !== "published" ? "Запись недоступна" : "Записаться"}
-            </Button>
-          )}
+          ) : (() => {
+            const cCount = participants.filter((p) => p.status === "confirmed").length;
+            const rCount = participants.filter((p) => p.status === "reserve").length;
+            const rLimit = getReserveLimit(event.max_participants);
+            const mainFull = cCount >= event.max_participants;
+            const reserveFull = rCount >= rLimit;
+
+            if (event.status !== "published") {
+              return <Button className="flex-1" disabled>Запись недоступна</Button>;
+            }
+
+            if (!mainFull) {
+              return <Button className="flex-1" onClick={() => handleJoin(false)}>Записаться</Button>;
+            }
+
+            if (!reserveFull) {
+              return <Button className="flex-1" variant="secondary" onClick={() => handleJoin(true)}>Записаться в резервный список</Button>;
+            }
+
+            return <Button className="flex-1" disabled>Мест нет</Button>;
+          })()}
         </div>
       </div>
       <TabBar />
