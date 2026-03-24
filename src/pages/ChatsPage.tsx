@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 type Tab = "events" | "direct";
 
@@ -24,18 +26,19 @@ export default function ChatsPage() {
     if (!user) return;
     setLoading(true);
 
-    // Event chats - events I'm in
+    // Event chats where I'm a participant
     const { data: myParts } = await supabase
       .from("event_participants")
       .select("event_id")
       .eq("user_id", user.id)
       .in("status", ["confirmed", "reserve"]);
 
+    // Events I organize (any status except cancelled)
     const { data: myOrg } = await supabase
       .from("events")
       .select("id")
       .eq("organizer_user_id", user.id)
-      .eq("status", "active");
+      .in("status", ["draft", "published", "unpublished", "completed"]);
 
     const eventIds = [
       ...(myParts?.map((p: any) => p.event_id) || []),
@@ -46,11 +49,12 @@ export default function ChatsPage() {
     if (uniqueIds.length > 0) {
       const { data: events } = await supabase
         .from("events")
-        .select("id, title, start_datetime")
+        .select("id, title, start_datetime, status")
         .in("id", uniqueIds)
-        .eq("status", "active")
-        .order("start_datetime", { ascending: true });
+        .order("start_datetime", { ascending: false });
       setEventChats(events || []);
+    } else {
+      setEventChats([]);
     }
 
     // Direct chats
@@ -80,6 +84,8 @@ export default function ChatsPage() {
           return { ...c, otherProfile: profileMap[otherId] || { name: "Пользователь" } };
         })
       );
+    } else {
+      setDirectChats([]);
     }
 
     setLoading(false);
@@ -89,6 +95,12 @@ export default function ChatsPage() {
     navigate("/auth");
     return null;
   }
+
+  const formatChatName = (chat: any) => {
+    const date = format(new Date(chat.start_datetime), "dd.MM.yyyy", { locale: ru });
+    const time = format(new Date(chat.start_datetime), "HH:mm", { locale: ru });
+    return `Чат события "${chat.title}" ${date} в ${time}`;
+  };
 
   return (
     <div className="min-h-screen bg-background safe-top">
@@ -135,12 +147,14 @@ export default function ChatsPage() {
                   onClick={() => navigate(`/event/${chat.id}/chat`)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <MessageCircle className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{chat.title}</p>
-                    <p className="text-xs text-muted-foreground">Чат события</p>
+                    <p className="text-sm font-medium truncate">{formatChatName(chat)}</p>
+                    {chat.status === "completed" && (
+                      <p className="text-xs text-destructive">Событие завершено</p>
+                    )}
                   </div>
                 </button>
               ))}
