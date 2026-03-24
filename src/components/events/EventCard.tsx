@@ -91,7 +91,7 @@ export function EventCard({ event, showStatus, onCopied, onStatusChanged }: Even
       location_id: event.location_id,
       organizer_user_id: event.organizer_user_id!,
       payment_type: event.payment_type,
-      reserve_limit: event.reserve_limit ?? 2,
+      reserve_limit: Math.ceil((event.max_participants ?? 10) * 0.3),
       recurrence_rule: event.recurrence_rule,
       status: "draft",
     });
