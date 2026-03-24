@@ -141,13 +141,13 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 pb-24">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : currentEvents.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
+          <div className="flex flex-col items-center justify-center text-center text-muted-foreground" style={{ minHeight: 'calc(60vh - 100px)' }}>
             <p className="text-lg font-medium">
               {tab === "participating" ? "Вы ещё не участвуете в событиях" : "Вы ещё не создали событий"}
             </p>
