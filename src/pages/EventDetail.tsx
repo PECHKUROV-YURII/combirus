@@ -457,7 +457,6 @@ export default function EventDetail() {
               <p className="text-xs text-muted-foreground mb-2">
                 Резерв ({reserveList.length}/{getReserveLimit(event.max_participants)})
               </p>
-              </p>
               <div className="flex items-center">
                 {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
                   <button
