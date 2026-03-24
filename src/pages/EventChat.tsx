@@ -90,15 +90,15 @@ export default function EventChat() {
   const isSystemMessage = (msg: any) => msg.sender_user_id === "00000000-0000-0000-0000-000000000000";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 py-3 flex items-center gap-3">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
+      <div className="shrink-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-base font-semibold truncate">{eventTitle || "Чат события"}</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <MessageCircle className="w-10 h-10 mb-2 opacity-50" />
@@ -136,7 +136,7 @@ export default function EventChat() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="border-t p-3 safe-bottom">
+      <div className="shrink-0 border-t p-3">
         <div className="flex gap-2">
           <Input
             value={newMessage}
