@@ -147,14 +147,26 @@ export default function EventDetail() {
 
   const handleCancel = async () => {
     if (!user || !event) return;
+    const wasPreviouslyConfirmed = myStatus === "confirmed";
     const { error } = await supabase
       .from("event_participants")
       .update({ status: "cancelled" })
       .eq("event_id", event.id)
       .eq("user_id", user.id);
 
-    if (error) { toast.error("Ошибка отмены"); }
-    else { toast.success("Запись отменена"); fetchEvent(); }
+    if (error) { toast.error("Ошибка отмены"); return; }
+
+    // If a confirmed participant left, notify the chat about the free spot
+    if (wasPreviouslyConfirmed) {
+      await supabase.from("event_chat_messages").insert({
+        event_id: event.id,
+        sender_user_id: "00000000-0000-0000-0000-000000000000",
+        message_text: "⚡ Освободилось место! Запишитесь, пока оно свободно.",
+      });
+    }
+
+    toast.success("Запись отменена");
+    fetchEvent();
   };
 
   const toggleFavorite = async () => {
