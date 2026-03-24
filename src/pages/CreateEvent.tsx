@@ -132,7 +132,7 @@ export default function CreateEvent() {
 
     const maxParts = parseInt(maxParticipants) || 10;
     const minParts = Math.min(parseInt(minParticipants) || 1, maxParts);
-    const reserveLimit = Math.round(maxParts * 0.2);
+    const reserveLimit = Math.ceil(maxParts * 0.3);
 
     const eventData = {
       title: title.trim(),

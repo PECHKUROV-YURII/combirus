@@ -117,20 +117,23 @@ export default function EventDetail() {
     setLoading(false);
   };
 
-  const handleJoin = async () => {
+  const getReserveLimit = (maxParticipants: number) => Math.ceil(maxParticipants * 0.3);
+
+  const handleJoin = async (forceReserve = false) => {
     if (!user) { navigate("/auth"); return; }
     if (!event) return;
 
     const confirmedCount = participants.filter((p) => p.status === "confirmed").length;
     const reserveCount = participants.filter((p) => p.status === "reserve").length;
+    const reserveLimit = getReserveLimit(event.max_participants);
 
     let status: string;
-    if (confirmedCount < event.max_participants) {
+    if (!forceReserve && confirmedCount < event.max_participants) {
       status = "confirmed";
-    } else if (reserveCount < event.reserve_limit) {
+    } else if (reserveCount < reserveLimit) {
       status = "reserve";
     } else {
-      toast.error("Мест нет");
+      toast.error("Мест нет, резерв заполнен");
       return;
     }
 
@@ -139,19 +142,31 @@ export default function EventDetail() {
     });
 
     if (error) { toast.error("Ошибка записи"); }
-    else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резерве"); fetchEvent(); }
+    else { toast.success(status === "confirmed" ? "Вы записаны!" : "Вы в резервном списке"); fetchEvent(); }
   };
 
   const handleCancel = async () => {
     if (!user || !event) return;
+    const wasPreviouslyConfirmed = myStatus === "confirmed";
     const { error } = await supabase
       .from("event_participants")
       .update({ status: "cancelled" })
       .eq("event_id", event.id)
       .eq("user_id", user.id);
 
-    if (error) { toast.error("Ошибка отмены"); }
-    else { toast.success("Запись отменена"); fetchEvent(); }
+    if (error) { toast.error("Ошибка отмены"); return; }
+
+    // If a confirmed participant left, notify the chat about the free spot
+    if (wasPreviouslyConfirmed) {
+      await supabase.from("event_chat_messages").insert({
+        event_id: event.id,
+        sender_user_id: "00000000-0000-0000-0000-000000000000",
+        message_text: "⚡ Освободилось место! Запишитесь, пока оно свободно.",
+      });
+    }
+
+    toast.success("Запись отменена");
+    fetchEvent();
   };
 
   const toggleFavorite = async () => {
@@ -440,7 +455,7 @@ export default function EventDetail() {
           {reserveList.length > 0 && (
             <div className="mt-3">
               <p className="text-xs text-muted-foreground mb-2">
-                Резерв ({reserveList.length}/{event.reserve_limit})
+                Резерв ({reserveList.length}/{getReserveLimit(event.max_participants)})
               </p>
               <div className="flex items-center">
                 {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
@@ -639,11 +654,27 @@ export default function EventDetail() {
                 Отменить запись
               </Button>
             </>
-          ) : (
-            <Button className="flex-1" onClick={handleJoin} disabled={event.status !== "published"}>
-              {event.status !== "published" ? "Запись недоступна" : "Записаться"}
-            </Button>
-          )}
+          ) : (() => {
+            const cCount = participants.filter((p) => p.status === "confirmed").length;
+            const rCount = participants.filter((p) => p.status === "reserve").length;
+            const rLimit = getReserveLimit(event.max_participants);
+            const mainFull = cCount >= event.max_participants;
+            const reserveFull = rCount >= rLimit;
+
+            if (event.status !== "published") {
+              return <Button className="flex-1" disabled>Запись недоступна</Button>;
+            }
+
+            if (!mainFull) {
+              return <Button className="flex-1" onClick={() => handleJoin(false)}>Записаться</Button>;
+            }
+
+            if (!reserveFull) {
+              return <Button className="flex-1" variant="secondary" onClick={() => handleJoin(true)}>Записаться в резервный список</Button>;
+            }
+
+            return <Button className="flex-1" disabled>Мест нет</Button>;
+          })()}
         </div>
       </div>
       <TabBar />
