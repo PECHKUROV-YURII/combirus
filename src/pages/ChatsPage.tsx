@@ -22,6 +22,22 @@ export default function ChatsPage() {
     fetchChats();
   }, [user]);
 
+  // Refetch when page becomes visible (e.g. navigating back)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && user) {
+        fetchChats();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [user]);
+
+  // Refetch when component remounts (tab navigation)
+  useEffect(() => {
+    if (user) fetchChats();
+  }, []);
+
   const fetchChats = async () => {
     if (!user) return;
     setLoading(true);
