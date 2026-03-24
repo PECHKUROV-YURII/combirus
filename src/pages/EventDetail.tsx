@@ -677,10 +677,16 @@ export default function EventDetail() {
                 <MessageCircle className="w-4 h-4 mr-1" />
                 Чат
               </Button>
-              <Button variant="destructive" className="flex-1" onClick={handleCancel}>
-                <XCircle className="w-4 h-4 mr-1" />
-                Отменить запись
-              </Button>
+              {myStatus === "reserve" && participants.filter((p) => p.status === "confirmed").length < event.max_participants ? (
+                <Button className="flex-1" onClick={() => handleJoin(false)}>
+                  Записаться
+                </Button>
+              ) : (
+                <Button variant="destructive" className="flex-1" onClick={handleCancel}>
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Отменить запись
+                </Button>
+              )}
             </>
           ) : (() => {
             const cCount = participants.filter((p) => p.status === "confirmed").length;
