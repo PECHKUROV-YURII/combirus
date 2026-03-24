@@ -94,6 +94,11 @@ export default function HomePage() {
 
   const currentEvents = tab === "participating" ? participating : organizing;
 
+  // Scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [tab]);
+
   return (
     <div className="min-h-screen bg-background safe-top">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 pt-4 pb-0">
