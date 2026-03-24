@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, MessageCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -30,7 +30,6 @@ export default function EventChat() {
         { event: "INSERT", schema: "public", table: "event_chat_messages", filter: `event_id=eq.${id}` },
         (payload) => {
           setMessages((prev) => [...prev, payload.new]);
-          // Fetch profile for new sender if not cached
           fetchProfileFor(payload.new.sender_user_id);
         }
       )
@@ -88,6 +87,8 @@ export default function EventChat() {
     setNewMessage("");
   };
 
+  const isSystemMessage = (msg: any) => msg.sender_user_id === "00000000-0000-0000-0000-000000000000";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b px-4 py-3 flex items-center gap-3">
@@ -98,23 +99,40 @@ export default function EventChat() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-        {messages.map((msg) => {
-          const isMe = msg.sender_user_id === user?.id;
-          const senderName = profiles[msg.sender_user_id]?.name || "Участник";
-          return (
-            <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-2xl px-3 py-2 ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                {!isMe && (
-                  <p className="text-xs font-medium mb-0.5 opacity-70">{senderName}</p>
-                )}
-                <p className="text-sm">{msg.message_text}</p>
-                <p className={`text-[10px] mt-0.5 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                  {format(new Date(msg.created_at), "HH:mm")}
-                </p>
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <MessageCircle className="w-10 h-10 mb-2 opacity-50" />
+            <p className="text-sm">Сообщений пока нет</p>
+          </div>
+        ) : (
+          messages.map((msg) => {
+            if (isSystemMessage(msg)) {
+              return (
+                <div key={msg.id} className="flex justify-center">
+                  <div className="bg-muted/60 rounded-xl px-4 py-2 text-xs text-muted-foreground text-center max-w-[85%]">
+                    {msg.message_text}
+                  </div>
+                </div>
+              );
+            }
+
+            const isMe = msg.sender_user_id === user?.id;
+            const senderName = profiles[msg.sender_user_id]?.name || "Участник";
+            return (
+              <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[75%] rounded-2xl px-3 py-2 ${isMe ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                  {!isMe && (
+                    <p className="text-xs font-medium mb-0.5 opacity-70">{senderName}</p>
+                  )}
+                  <p className="text-sm">{msg.message_text}</p>
+                  <p className={`text-[10px] mt-0.5 ${isMe ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                    {format(new Date(msg.created_at), "HH:mm")}
+                  </p>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
         <div ref={bottomRef} />
       </div>
 

@@ -6,6 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -19,7 +21,7 @@ Deno.serve(async (req) => {
     const now = new Date();
     const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
-    // 1. Mark past published events as "completed" (end_datetime or start_datetime already passed)
+    // 1. Mark past published events as "completed" and send chat warning
     const { data: pastEvents, error: pastError } = await supabase
       .from("events")
       .select("id, title, end_datetime, start_datetime")
@@ -28,16 +30,59 @@ Deno.serve(async (req) => {
 
     if (!pastError && pastEvents) {
       for (const ev of pastEvents) {
-        // Event is completed if end_datetime passed, or if no end_datetime then start_datetime passed
         const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
         if (endTime <= now) {
           await supabase.from("events").update({ status: "completed" }).eq("id", ev.id);
           console.log(`Event "${ev.title}" (${ev.id}) marked as completed`);
+
+          // Send auto-delete warning message to event chat
+          const { data: existingWarning } = await supabase
+            .from("event_chat_messages")
+            .select("id")
+            .eq("event_id", ev.id)
+            .eq("sender_user_id", SYSTEM_USER_ID)
+            .ilike("message_text", "%автоматически удалён%")
+            .limit(1);
+
+          if (!existingWarning || existingWarning.length === 0) {
+            await supabase.from("event_chat_messages").insert({
+              event_id: ev.id,
+              sender_user_id: SYSTEM_USER_ID,
+              message_text: "Событие завершено. Чат события будет автоматически удалён через 24 часа.",
+            });
+            console.log(`Sent chat deletion warning for event "${ev.title}"`);
+          }
         }
       }
     }
 
-    // 2. Auto-cancel published events starting within 2 hours with insufficient participants
+    // 2. Delete chats of events completed more than 24 hours ago
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const { data: oldCompleted } = await supabase
+      .from("events")
+      .select("id, title, end_datetime, start_datetime")
+      .eq("status", "completed");
+
+    if (oldCompleted) {
+      for (const ev of oldCompleted) {
+        const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
+        if (endTime <= twentyFourHoursAgo) {
+          const { error: delError } = await supabase
+            .from("event_chat_messages")
+            .delete()
+            .eq("event_id", ev.id);
+
+          if (!delError) {
+            console.log(`Deleted chat messages for completed event "${ev.title}" (${ev.id})`);
+          } else {
+            console.error(`Error deleting chat for event ${ev.id}:`, delError);
+          }
+        }
+      }
+    }
+
+    // 3. Auto-cancel published events starting within 2 hours with insufficient participants
     const { data: events, error: eventsError } = await supabase
       .from("events")
       .select("id, title, min_participants, organizer_user_id")
