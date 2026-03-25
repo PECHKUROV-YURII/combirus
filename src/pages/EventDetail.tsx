@@ -543,21 +543,53 @@ export default function EventDetail() {
               </p>
               <div className="flex items-center">
                 {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedProfile(p.profile)}
-                    className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
-                    style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
-                  >
-                    <Avatar className="w-8 h-8">
-                      {p.profile?.avatar_url ? (
-                        <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} />
-                      ) : null}
-                      <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
-                        {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
+                  isOrganizer && p.user_id !== user?.id ? (
+                    <Popover key={p.id}>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                          style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                        >
+                          <Avatar className="w-8 h-8">
+                            {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
+                              {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2 flex gap-4" align="center">
+                        <button
+                          onClick={() => setSelectedProfile(p.profile)}
+                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-accent transition-colors"
+                        >
+                          <UserRound className="w-5 h-5 text-primary" />
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Профиль участника</span>
+                        </button>
+                        <button
+                          onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); }}
+                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                        >
+                          <XCircle className="w-5 h-5 text-destructive" />
+                          <span className="text-[10px] text-destructive whitespace-nowrap">Удалить участника</span>
+                        </button>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedProfile(p.profile)}
+                      className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                      style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                    >
+                      <Avatar className="w-8 h-8">
+                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
+                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  )
                 ))}
                 {reserveList.length > MAX_VISIBLE_AVATARS && (
                   <button
