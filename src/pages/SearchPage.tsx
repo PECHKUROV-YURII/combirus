@@ -30,12 +30,13 @@ export default function SearchPage() {
   const fetchEvents = async () => {
     setLoading(true);
     const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     let q = supabase
       .from("events")
       .select("*")
       .eq("status", "published")
       .eq("is_private", false)
-      .or(`end_datetime.gte.${now.toISOString()},and(end_datetime.is.null,start_datetime.gte.${now.toISOString()})`)
+      .gte("start_datetime", startOfToday)
       .order("start_datetime", { ascending: true });
 
     if (query) {
