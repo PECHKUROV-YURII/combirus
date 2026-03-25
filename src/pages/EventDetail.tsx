@@ -236,6 +236,23 @@ export default function EventDetail() {
     setDeleteDialog(false);
   };
 
+  const handleRemoveParticipant = async () => {
+    if (!participantToRemove || !event) return;
+    const { error } = await supabase
+      .from("event_participants")
+      .update({ status: "removed" })
+      .eq("event_id", event.id)
+      .eq("user_id", participantToRemove.user_id);
+    if (error) {
+      toast.error("Ошибка удаления участника");
+    } else {
+      toast.success("Участник удален из события");
+      fetchEvent();
+    }
+    setRemoveParticipantDialog(false);
+    setParticipantToRemove(null);
+  };
+
   const handleShare = async () => {
     const url = `https://combirus.lovable.app/event/${event.id}`;
     if (navigator.share) {
