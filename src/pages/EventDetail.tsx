@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
-  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send,
+  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send, UserRound,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -44,6 +44,8 @@ export default function EventDetail() {
   const [publishDialog, setPublishDialog] = useState(false);
   const [unpublishDialog, setUnpublishDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
+  const [removeParticipantDialog, setRemoveParticipantDialog] = useState(false);
+  const [participantToRemove, setParticipantToRemove] = useState<any>(null);
 
   const MAX_VISIBLE_AVATARS = 6;
 
@@ -152,6 +154,11 @@ export default function EventDetail() {
       return;
     }
 
+    if (existingParticipation?.status === "removed") {
+      toast.error("Вы не можете записаться на событие");
+      return;
+    }
+
     const request = existingParticipation
       ? supabase
           .from("event_participants")
@@ -227,6 +234,23 @@ export default function EventDetail() {
     if (error) { toast.error("Ошибка удаления"); }
     else { toast.success("Событие удалено"); navigate("/home?tab=organizing"); }
     setDeleteDialog(false);
+  };
+
+  const handleRemoveParticipant = async () => {
+    if (!participantToRemove || !event) return;
+    const { error } = await supabase
+      .from("event_participants")
+      .update({ status: "removed" })
+      .eq("event_id", event.id)
+      .eq("user_id", participantToRemove.user_id);
+    if (error) {
+      toast.error("Ошибка удаления участника");
+    } else {
+      toast.success("Участник удален из события");
+      fetchEvent();
+    }
+    setRemoveParticipantDialog(false);
+    setParticipantToRemove(null);
   };
 
   const handleShare = async () => {
@@ -454,21 +478,53 @@ export default function EventDetail() {
           )}
           <div className="flex items-center">
             {confirmedList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
-              <button
-                key={p.id}
-                onClick={() => setSelectedProfile(p.profile)}
-                className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
-                style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
-              >
-                <Avatar className="w-10 h-10">
-                  {p.profile?.avatar_url ? (
-                    <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} />
-                  ) : null}
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                    {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-              </button>
+              isOrganizer && p.user_id !== user?.id ? (
+                <Popover key={p.id}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                      style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                    >
+                      <Avatar className="w-10 h-10">
+                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                        <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2 flex gap-4" align="center">
+                    <button
+                      onClick={() => setSelectedProfile(p.profile)}
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <UserRound className="w-5 h-5 text-primary" />
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">Профиль участника</span>
+                    </button>
+                    <button
+                      onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); }}
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                    >
+                      <XCircle className="w-5 h-5 text-destructive" />
+                      <span className="text-[10px] text-destructive whitespace-nowrap">Удалить участника</span>
+                    </button>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedProfile(p.profile)}
+                  className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                  style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                >
+                  <Avatar className="w-10 h-10">
+                    {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                      {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              )
             ))}
             {confirmedList.length > MAX_VISIBLE_AVATARS && (
               <button
@@ -487,21 +543,53 @@ export default function EventDetail() {
               </p>
               <div className="flex items-center">
                 {reserveList.slice(0, MAX_VISIBLE_AVATARS).map((p, i) => (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedProfile(p.profile)}
-                    className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
-                    style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
-                  >
-                    <Avatar className="w-8 h-8">
-                      {p.profile?.avatar_url ? (
-                        <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} />
-                      ) : null}
-                      <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
-                        {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
+                  isOrganizer && p.user_id !== user?.id ? (
+                    <Popover key={p.id}>
+                      <PopoverTrigger asChild>
+                        <button
+                          className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                          style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                        >
+                          <Avatar className="w-8 h-8">
+                            {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
+                              {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-2 flex gap-4" align="center">
+                        <button
+                          onClick={() => setSelectedProfile(p.profile)}
+                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-accent transition-colors"
+                        >
+                          <UserRound className="w-5 h-5 text-primary" />
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Профиль участника</span>
+                        </button>
+                        <button
+                          onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); }}
+                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-destructive/10 transition-colors"
+                        >
+                          <XCircle className="w-5 h-5 text-destructive" />
+                          <span className="text-[10px] text-destructive whitespace-nowrap">Удалить участника</span>
+                        </button>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <button
+                      key={p.id}
+                      onClick={() => setSelectedProfile(p.profile)}
+                      className="relative rounded-full border-2 border-background hover:z-20 transition-transform hover:scale-110"
+                      style={{ marginLeft: i === 0 ? 0 : -10, zIndex: MAX_VISIBLE_AVATARS - i }}
+                    >
+                      <Avatar className="w-8 h-8">
+                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} alt={p.profile?.name} /> : null}
+                        <AvatarFallback className="bg-muted text-muted-foreground text-xs font-semibold">
+                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </button>
+                  )
                 ))}
                 {reserveList.length > MAX_VISIBLE_AVATARS && (
                   <button
@@ -535,19 +623,28 @@ export default function EventDetail() {
             <h3 className="font-semibold mb-3">Все участники ({confirmedList.length})</h3>
             <div className="space-y-2">
               {confirmedList.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <Avatar className="w-10 h-10">
-                    {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                      {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
-                </button>
+                <div key={p.id} className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                  <button
+                    onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <Avatar className="w-10 h-10">
+                      {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                        {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                  </button>
+                  {isOrganizer && p.user_id !== user?.id && (
+                    <button
+                      onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); setShowAllParticipants(false); }}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                    >
+                      <XCircle className="w-4 h-4 text-destructive" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
             {reserveList.length > 0 && (
@@ -555,19 +652,28 @@ export default function EventDetail() {
                 <h4 className="font-semibold text-sm mt-4 mb-2 text-muted-foreground">Резерв ({reserveList.length})</h4>
                 <div className="space-y-2">
                   {reserveList.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
-                      className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
-                    >
-                      <Avatar className="w-10 h-10">
-                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
-                        <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">
-                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
-                    </button>
+                    <div key={p.id} className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                      <button
+                        onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                        className="flex items-center gap-3 flex-1 text-left"
+                      >
+                        <Avatar className="w-10 h-10">
+                          {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                          <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">
+                            {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                      </button>
+                      {isOrganizer && p.user_id !== user?.id && (
+                        <button
+                          onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); setShowAllParticipants(false); }}
+                          className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </>
@@ -646,7 +752,24 @@ export default function EventDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bottom actions */}
+      {/* Remove participant confirmation */}
+      <AlertDialog open={removeParticipantDialog} onOpenChange={(open) => { setRemoveParticipantDialog(open); if (!open) setParticipantToRemove(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление участника</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы действительно хотите удалить участника из события?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Нет</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Да
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
         <div className="flex gap-2 max-w-lg mx-auto">
           {isOrganizer ? (
