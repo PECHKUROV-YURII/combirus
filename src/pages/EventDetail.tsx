@@ -752,7 +752,24 @@ export default function EventDetail() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bottom actions */}
+      {/* Remove participant confirmation */}
+      <AlertDialog open={removeParticipantDialog} onOpenChange={(open) => { setRemoveParticipantDialog(open); if (!open) setParticipantToRemove(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удаление участника</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы действительно хотите удалить участника из события?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Нет</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Да
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="fixed bottom-14 left-0 right-0 p-4 bg-background/95 backdrop-blur-sm border-t">
         <div className="flex gap-2 max-w-lg mx-auto">
           {isOrganizer ? (
