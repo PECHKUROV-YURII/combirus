@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   Calendar, MapPin, Users, Heart, Share2, MessageCircle, Edit, XCircle,
-  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send,
+  Copy, ExternalLink, Link as LinkIcon, X, Trash2, Send, UserRound,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
