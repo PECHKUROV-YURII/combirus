@@ -154,6 +154,11 @@ export default function EventDetail() {
       return;
     }
 
+    if (existingParticipation?.status === "removed") {
+      toast.error("Вы не можете записаться на событие");
+      return;
+    }
+
     const request = existingParticipation
       ? supabase
           .from("event_participants")
