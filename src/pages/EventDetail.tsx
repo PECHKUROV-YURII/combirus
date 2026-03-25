@@ -623,19 +623,28 @@ export default function EventDetail() {
             <h3 className="font-semibold mb-3">Все участники ({confirmedList.length})</h3>
             <div className="space-y-2">
               {confirmedList.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
-                  className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <Avatar className="w-10 h-10">
-                    {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
-                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                      {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
-                </button>
+                <div key={p.id} className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                  <button
+                    onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <Avatar className="w-10 h-10">
+                      {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                        {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                  </button>
+                  {isOrganizer && p.user_id !== user?.id && (
+                    <button
+                      onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); setShowAllParticipants(false); }}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                    >
+                      <XCircle className="w-4 h-4 text-destructive" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
             {reserveList.length > 0 && (
@@ -643,19 +652,28 @@ export default function EventDetail() {
                 <h4 className="font-semibold text-sm mt-4 mb-2 text-muted-foreground">Резерв ({reserveList.length})</h4>
                 <div className="space-y-2">
                   {reserveList.map((p) => (
-                    <button
-                      key={p.id}
-                      onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
-                      className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors text-left"
-                    >
-                      <Avatar className="w-10 h-10">
-                        {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
-                        <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">
-                          {p.profile?.name?.[0]?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
-                    </button>
+                    <div key={p.id} className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-muted transition-colors">
+                      <button
+                        onClick={() => { setSelectedProfile(p.profile); setShowAllParticipants(false); }}
+                        className="flex items-center gap-3 flex-1 text-left"
+                      >
+                        <Avatar className="w-10 h-10">
+                          {p.profile?.avatar_url ? <AvatarImage src={p.profile.avatar_url} /> : null}
+                          <AvatarFallback className="bg-muted text-muted-foreground text-sm font-semibold">
+                            {p.profile?.name?.[0]?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{p.profile?.name || "Участник"}</span>
+                      </button>
+                      {isOrganizer && p.user_id !== user?.id && (
+                        <button
+                          onClick={() => { setParticipantToRemove(p); setRemoveParticipantDialog(true); setShowAllParticipants(false); }}
+                          className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors"
+                        >
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        </button>
+                      )}
+                    </div>
                   ))}
                 </div>
               </>
