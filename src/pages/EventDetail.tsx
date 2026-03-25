@@ -44,6 +44,8 @@ export default function EventDetail() {
   const [publishDialog, setPublishDialog] = useState(false);
   const [unpublishDialog, setUnpublishDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
+  const [removeParticipantDialog, setRemoveParticipantDialog] = useState(false);
+  const [participantToRemove, setParticipantToRemove] = useState<any>(null);
 
   const MAX_VISIBLE_AVATARS = 6;
 
