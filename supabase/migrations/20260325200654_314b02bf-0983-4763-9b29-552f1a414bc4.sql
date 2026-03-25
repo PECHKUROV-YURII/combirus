@@ -1,0 +1,2 @@
+ALTER TABLE public.event_participants DROP CONSTRAINT event_participants_status_check;
+ALTER TABLE public.event_participants ADD CONSTRAINT event_participants_status_check CHECK (status = ANY (ARRAY['confirmed'::text, 'reserve'::text, 'cancelled'::text, 'removed'::text]));
