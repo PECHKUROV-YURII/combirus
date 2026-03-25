@@ -54,13 +54,13 @@ export default function CreateEvent() {
       setPrice(data.price ? String(data.price) : "");
       if (data.start_datetime) {
         const s = new Date(data.start_datetime);
-        setStartDate(s.toISOString().slice(0, 10));
-        setStartTime(s.toISOString().slice(11, 16));
+        setStartDate(`${s.getFullYear()}-${String(s.getMonth() + 1).padStart(2, '0')}-${String(s.getDate()).padStart(2, '0')}`);
+        setStartTime(`${String(s.getHours()).padStart(2, '0')}:${String(s.getMinutes()).padStart(2, '0')}`);
       }
       if (data.end_datetime) {
         const e = new Date(data.end_datetime);
-        setEndDate(e.toISOString().slice(0, 10));
-        setEndTime(e.toISOString().slice(11, 16));
+        setEndDate(`${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, '0')}-${String(e.getDate()).padStart(2, '0')}`);
+        setEndTime(`${String(e.getHours()).padStart(2, '0')}:${String(e.getMinutes()).padStart(2, '0')}`);
       }
       if (data.cover_images && data.cover_images.length > 0) {
         setExistingCoverImages(data.cover_images);
