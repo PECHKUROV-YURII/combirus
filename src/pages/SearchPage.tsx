@@ -35,7 +35,7 @@ export default function SearchPage() {
       .select("*")
       .eq("status", "published")
       .eq("is_private", false)
-      .gte("start_datetime", now.toISOString())
+      .or(`end_datetime.gte.${now.toISOString()},and(end_datetime.is.null,start_datetime.gte.${now.toISOString()})`)
       .order("start_datetime", { ascending: true });
 
     if (query) {
