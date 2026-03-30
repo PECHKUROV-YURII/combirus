@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
     const { data: oldCompleted } = await supabase
       .from("events")
       .select("id, title, end_datetime, start_datetime")
-      .eq("status", "completed");
+      .in("status", ["completed", "unpublished", "cancelled"]);
 
     if (oldCompleted) {
       for (const ev of oldCompleted) {
