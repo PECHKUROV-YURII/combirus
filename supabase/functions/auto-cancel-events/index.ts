@@ -68,15 +68,28 @@ Deno.serve(async (req) => {
       for (const ev of oldCompleted) {
         const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
         if (endTime <= twentyFourHoursAgo) {
-          const { error: delError } = await supabase
+          // Delete chat messages
+          const { error: delMsgError } = await supabase
             .from("event_chat_messages")
             .delete()
             .eq("event_id", ev.id);
 
-          if (!delError) {
+          if (!delMsgError) {
             console.log(`Deleted chat messages for completed event "${ev.title}" (${ev.id})`);
           } else {
-            console.error(`Error deleting chat for event ${ev.id}:`, delError);
+            console.error(`Error deleting chat for event ${ev.id}:`, delMsgError);
+          }
+
+          // Remove participant records so chat disappears from lists
+          const { error: delPartError } = await supabase
+            .from("event_participants")
+            .delete()
+            .eq("event_id", ev.id);
+
+          if (!delPartError) {
+            console.log(`Deleted participants for completed event "${ev.title}" (${ev.id})`);
+          } else {
+            console.error(`Error deleting participants for event ${ev.id}:`, delPartError);
           }
         }
       }
