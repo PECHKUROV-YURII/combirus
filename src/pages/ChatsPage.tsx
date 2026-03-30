@@ -69,13 +69,16 @@ export default function ChatsPage() {
         .in("id", uniqueIds)
         .order("start_datetime", { ascending: false });
 
-      // Filter out completed events older than 24 hours (chat deleted)
+      // Filter out events that ended more than 24 hours ago (chat should be deleted)
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const filtered = (events || []).filter((ev: any) => {
-        if (ev.status !== "completed") return true;
         const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
-        return endTime > twentyFourHoursAgo;
+        // Hide if event ended more than 24h ago regardless of status
+        if (endTime <= twentyFourHoursAgo) return false;
+        // Hide cancelled/unpublished events (not relevant for chat)
+        if (ev.status === "cancelled") return false;
+        return true;
       });
       setEventChats(filtered);
     } else {
