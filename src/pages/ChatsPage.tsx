@@ -65,10 +65,19 @@ export default function ChatsPage() {
     if (uniqueIds.length > 0) {
       const { data: events } = await supabase
         .from("events")
-        .select("id, title, start_datetime, status")
+        .select("id, title, start_datetime, end_datetime, status")
         .in("id", uniqueIds)
         .order("start_datetime", { ascending: false });
-      setEventChats(events || []);
+
+      // Filter out completed events older than 24 hours (chat deleted)
+      const now = new Date();
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const filtered = (events || []).filter((ev: any) => {
+        if (ev.status !== "completed") return true;
+        const endTime = ev.end_datetime ? new Date(ev.end_datetime) : new Date(ev.start_datetime);
+        return endTime > twentyFourHoursAgo;
+      });
+      setEventChats(filtered);
     } else {
       setEventChats([]);
     }
