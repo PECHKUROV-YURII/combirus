@@ -340,7 +340,16 @@ export default function EventDetail() {
           </Popover>
         </div>
         <button
-          onClick={() => navigate("/home?tab=organizing")}
+          onClick={() => {
+            const isOrg = user?.id === event?.organizer_user_id;
+            if (isOrg) {
+              navigate("/home?tab=organizing");
+            } else if (myStatus === "confirmed" || myStatus === "reserve") {
+              navigate("/home");
+            } else {
+              navigate("/search");
+            }
+          }}
           className="absolute top-4 right-4 w-9 h-9 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center"
         >
           <X className="w-5 h-5" />
